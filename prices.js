@@ -4,8 +4,9 @@ let guidePromise,ratePromise;
 async function getGuide(){
  if(guidePromise)return guidePromise;
  guidePromise=(async()=>{
-  const r=await fetch(GUIDE);if(!r.ok)throw Error(`Cardmarket price guide unavailable (${r.status}).`);
-  const data=await r.json();if(!Array.isArray(data.priceGuides))throw Error('Cardmarket price guide had an unexpected format.');
+  let data;
+  for(const url of ['./api/price-guide',GUIDE]){try{const r=await fetch(url);if(!r.ok)continue;data=await r.json();break;}catch{}}
+  if(!data||!Array.isArray(data.priceGuides))throw Error('Cardmarket price guide unavailable.');
   const prices=new Map();for(const p of data.priceGuides)if(Number.isFinite(Number(p.low))||Number.isFinite(Number(p['low-foil'])))prices.set(String(p.idProduct),{low:Number(p.low)||null,foil:Number(p['low-foil'])||null});
   return {createdAt:data.createdAt,prices};
  })().catch(e=>{guidePromise=null;throw e;});return guidePromise;
