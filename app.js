@@ -5,7 +5,8 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let db,events=[],editing=null,draft=null,heads=[],assignmentDraft={},results=[],nextPage=null,searchBusy=false,driveBusy=false,toastTimer,installPrompt,currentPage='home',cardCatalog=[],cardPrices=new Map(),lastPriceKey='';
 let activeDeck='',selectedDeck='',deckSearch='',deckSearchOpen=false,deckSort='default',deckSimpleView=false,showCollectionDecks=localStorage.getItem('arcana-hide-deck-ctas')!=='true',hydrationRunning=false,pendingCommanderAnim=null;const hydrationTried=new Set();
-let clientId=localStorage.getItem('arcana-client-id')||'',geminiApiKey=localStorage.getItem('arcana-gemini-key')||'',lastOnlineGuide='';
+const DEFAULT_CLIENT_ID='713228552059-d3nb08komhcf7o4vtvsd2oma8g03ooch.apps.googleusercontent.com';
+let clientId=localStorage.getItem('arcana-client-id')||DEFAULT_CLIENT_ID,geminiApiKey=localStorage.getItem('arcana-gemini-key')||'',lastOnlineGuide='';
 async function confirmAction(message){
  const modal=$('confirm-dialog');$('confirm-message').textContent=message;
  return new Promise(resolve=>{modal.addEventListener('close',()=>resolve(modal.returnValue==='yes'),{once:true});modal.showModal();});
