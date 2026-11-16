@@ -1,0 +1,12 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {mergeEvents,records,backup,parseBackup,cardFromScryfall} from '../core.js';
+const card={name:'Lightning Bolt',quantity:1,finish:'nonfoil',condition:'Near mint',language:'en',location:'Binder 1',notes:'',validated:false};
+const event=(id,parents=[],value=card)=>({id,recordId:'one',parents,value,at:'2026-11-16T12:00:00Z'});
+test('backups round trip with duplicate revisions deduplicated',()=>{const a=event('a');assert.deepEqual(parseBackup(backup([a])),[a]);assert.equal(mergeEvents([a],[a]).length,1);});
+test('independent edits conflict without silently changing quantity',()=>{const a=event('a'),b=event('b',['a'],{...card,quantity:2}),c=event('c',['a'],{...card,quantity:3});const merged=mergeEvents([a,b],[a,c]);assert.equal(records(merged)[0].conflict,true);assert.equal(records(merged)[0].heads.length,2);});
+test('a resolution retires both competing versions',()=>{const events=[event('a'),event('b',['a']),event('c',['a']),event('d',['b','c'],{...card,quantity:5})];const r=records(mergeEvents(events));assert.equal(r[0].conflict,false);assert.equal(r[0].value.quantity,5);});
+test('deleted records do not reappear on importing older backups',()=>{const a=event('a'),b=event('b',['a'],null);assert.equal(records(mergeEvents([a,b],[a]))[0].value,null);});
+test('delete versus edit remains a reviewable conflict',()=>{const a=event('a');assert.equal(records(mergeEvents([a,event('b',['a'],null)],[a,event('c',['a'])]))[0].conflict,true);});
+test('invalid backups and corrupted revision graphs are rejected',()=>{assert.throws(()=>parseBackup('{}'));assert.throws(()=>mergeEvents([event('a',[],{...card,quantity:-1})]));assert.throws(()=>mergeEvents([event('a',['missing'])]));assert.throws(()=>mergeEvents([event('a',['b']),event('b',['a'])]));assert.throws(()=>mergeEvents([event('a')],[event('a',[],null)]));assert.throws(()=>mergeEvents([event('a'),{...event('b',['a']),recordId:'other'}]));});
+test('double-faced cards use front image and both faces rules',()=>{const c=cardFromScryfall({name:'Front // Back',id:'id',set:'tst',set_name:'Test',collector_number:'1',rarity:'rare',lang:'en',finishes:['nonfoil'],card_faces:[{name:'Front',oracle_text:'First',image_uris:{normal:'https://cards.scryfall.io/front.jpg'}},{name:'Back',oracle_text:'Second'}]});assert.equal(c.image,'https://cards.scryfall.io/front.jpg');assert.match(c.text,/First/);assert.match(c.text,/Second/);});

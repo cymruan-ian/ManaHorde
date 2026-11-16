@@ -1,0 +1,6 @@
+import {deflateSync} from 'node:zlib';
+import {writeFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+const crc=b=>{let c=0xffffffff;for(const v of b){c^=v;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;};
+function chunk(type,b){const t=Buffer.from(type),len=Buffer.alloc(4),check=Buffer.alloc(4);len.writeUInt32BE(b.length);check.writeUInt32BE(crc(Buffer.concat([t,b])));return Buffer.concat([len,t,b,check]);}
+for(const n of [192,512]){const rows=Buffer.alloc(n*(n*4+1)),mana=[[241,223,154],[91,151,210],[70,82,81],[216,92,84],[78,154,98]],centres=[[.5,.22],[.77,.42],[.67,.75],[.33,.75],[.23,.42]];for(let y=0;y<n;y++)for(let x=0;x<n;x++){const dx=x/n-.5,dy=y/n-.5,d=Math.abs(dx)/.39+Math.abs(dy)/.48;let color=d<.93?[255,253,248,255]:[244,240,231,255];if(Math.abs(d-.93)<.025)color=[217,206,186,255];for(let j=0;j<5;j++){const [cx,cy]=centres[j],dist=Math.hypot(x/n-cx,y/n-cy);if(dist<.074)color=[...mana[j],255];else if(dist<.083&&dist>.074)color=[255,253,248,255];}const p=y*(n*4+1)+1+x*4;rows.set(color,p);}const h=Buffer.alloc(13);h.writeUInt32BE(n,0);h.writeUInt32BE(n,4);h[8]=8;h[9]=6;writeFileSync(fileURLToPath(new URL(`../icon-${n}.png`,import.meta.url)),Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',h),chunk('IDAT',deflateSync(rows)),chunk('IEND',Buffer.alloc(0))]));}
