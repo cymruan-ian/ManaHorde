@@ -217,3 +217,7 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 }
 #cards.cards{grid-template-columns:repeat(var(--collection-cols,3),minmax(0,1fr))}
 #cards.cards .card{min-width:0}
+.collection-card-title{margin:0;padding:10px 10px 8px;font-size:12px;line-height:1.25;text-align:center;color:#27302c;overflow-wrap:anywhere}
+.card-expand-btn{position:absolute;z-index:4;left:50%;bottom:6px;transform:translateX(-50%);width:30px;height:22px;padding:0;display:grid;place-items:center;border:1px solid rgba(255,255,255,.78);border-radius:999px;background:rgba(24,38,31,.82);color:#fffdf8;font-size:14px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer;transition:transform .2s,background .15s}
+.card-expand-btn:hover{background:#176b53}
+.card-expand-btn.is-expanded{transform:translateX(-50%) rotate(180deg);background:#176b53}
