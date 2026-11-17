@@ -5,6 +5,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const START_PAGE_KEY='manahorde-start-page',START_PAGES=new Set(['home','collection','decks','shopping','add-cards']),savedStartPage=localStorage.getItem(START_PAGE_KEY);
 let db,events=[],editing=null,draft=null,heads=[],assignmentDraft={},results=[],nextPage=null,searchBusy=false,driveBusy=false,toastTimer,installPrompt,currentPage=START_PAGES.has(savedStartPage)?savedStartPage:'home',cardCatalog=[],cardPrices=new Map(),lastPriceKey='';
+let lookupReturnPage='home',scannerStream=null,ocrWorkerPromise=null,ocrScriptPromise=null,scannerBusy=false;
 let activeDeck='',selectedDeck='',deckSearch='',deckSearchOpen=false,deckSort='default',deckSimpleView=false,hydrationRunning=false,pendingCommanderAnim=null,pendingScrollCardId=null;const hydrationTried=new Set(),expandedCards=new Set();
 const deckCtasKey=()=>matchMedia('(pointer: coarse)').matches||innerWidth<=900?'arcana-hide-deck-ctas-mobile':'arcana-hide-deck-ctas-desktop';
 const isDeckCtasVisible=()=>localStorage.getItem(deckCtasKey())!=='true';
@@ -107,7 +108,7 @@ function renderDeckManager(decks,cards){
  const deckIdentity=d=>{const leaders=(d.value.commanders||[]).map(id=>cards.find(r=>r.id===id)?.value).filter(Boolean),colors=[...new Set(leaders.flatMap(v=>v.colorIdentity||[]))].filter(c=>['W','U','B','R','G'].includes(c)),palette={W:'#f1df9a',U:'#5b97d2',B:'#465251',R:'#d85c54',G:'#4e9a62'};return colors.length>1?`conic-gradient(${colors.map((c,i)=>`${palette[c]} ${(i*100/colors.length).toFixed(2)}% ${((i+1)*100/colors.length).toFixed(2)}%`).join(',')})`:colors.length?`linear-gradient(0deg,${palette[colors[0]]},${palette[colors[0]]})`:'linear-gradient(0deg,#cfc9bc,#cfc9bc)';};
 const deckListHtml=validDecks.length?validDecks.map(d=>{const {art,checks}=deckButton(d),favourite=!!d.value.favourite;return `<article class="deck-row${favourite?' is-favourite':''}" data-deck-row="${esc(d.id)}" style="--deck-fav-fill:${deckIdentity(d)};--deck-art:${art?`url('${esc(art)}')`:'none'}"><button type="button" class="deck-open" data-deck-open="${esc(d.id)}"><span class="deck-row-copy"><strong>${esc(d.value.name)}</strong></span></button><span class="deck-validity ${checks.valid?'valid':'invalid'}" aria-label="${checks.valid?'Commander rules pass':'Needs attention'}">${checks.valid?'<span class="deck-status-icon" aria-hidden="true">✓</span>':'Needs attention'}</span><button type="button" class="deck-favourite-toggle" data-deck-favourite="${esc(d.id)}" aria-pressed="${favourite}" aria-label="${favourite?'Remove '+esc(d.value.name)+' from favourites':'Mark '+esc(d.value.name)+' as favourite'}" title="${favourite?'Remove from favourites':'Mark as favourite'}">${favourite?'★':'☆'}</button></article>`;}).join(''):'<p class="muted">No decks yet. Choose New Deck to get started.</p>';
  $('deck-list').innerHTML=deckListHtml;$('decks-page-list').innerHTML=deckListHtml;
- $('decks-home').hidden=false;$('deck-detail').hidden=true;$('home-page').hidden=currentPage!=='home';$('information-page').hidden=currentPage!=='information';$('add-cards-page').hidden=currentPage!=='add-cards';$('collection-page').hidden=currentPage!=='collection';$('decks-page').hidden=currentPage!=='decks';$('deck-page').hidden=currentPage!=='deck';$('shopping-page').hidden=currentPage!=='shopping';
+ $('decks-home').hidden=false;$('deck-detail').hidden=true;$('home-page').hidden=currentPage!=='home';$('information-page').hidden=currentPage!=='information';$('add-cards-page').hidden=currentPage!=='add-cards';$('card-lookup-page').hidden=currentPage!=='lookup';$('collection-page').hidden=currentPage!=='collection';$('decks-page').hidden=currentPage!=='decks';$('deck-page').hidden=currentPage!=='deck';$('shopping-page').hidden=currentPage!=='shopping';$('mobile-scan-action').hidden=!isAndroidMobile();$('card-scanner-tools').hidden=!isAndroidMobile();if(currentPage!=='lookup')stopCardScanner();
  if(currentPage==='deck'){const deck=validDecks.find(d=>d.id===selectedDeck);if(deck)renderDeckPage(deck,cards);else{currentPage='collection';$('deck-page').hidden=true;$('collection-page').hidden=false;}}
 }
 function deckCardLegalityIssue(deck,members,row){
@@ -247,14 +248,38 @@ function renderLookupSuggestions(){
  box.innerHTML=hits.map(name=>`<button type="button" class="lookup-suggestion" role="option" data-suggest="${esc(name)}">${esc(name)}</button>`).join('');
  box.hidden=false;
 }
+function isAndroidMobile(){return /Android/i.test(navigator.userAgent)&&(matchMedia('(pointer:coarse)').matches||innerWidth<=900);}
 function openCardLookup(){
+ lookupReturnPage=currentPage==='lookup'?lookupReturnPage:currentPage;
  lookedUpCard=null;
  $('card-lookup-input').value='';
  $('card-lookup-suggestions').innerHTML='';$('card-lookup-suggestions').hidden=true;
  $('card-lookup-status').textContent='';
  $('card-lookup-result').innerHTML='';$('card-lookup-result').hidden=true;
- show('card-lookup-dialog');$('card-lookup-input').focus();
+ $('scanner-search').hidden=true;$('scanner-status').textContent='The card photo is processed on this device. Only the card name is sent to Scryfall when you search.';$('scanner-camera-wrap').hidden=true;
+ currentPage='lookup';render();window.scrollTo({top:0,behavior:'smooth'});$('card-lookup-input').focus();
 }
+function closeCardLookup(){stopCardScanner();currentPage=lookupReturnPage||'home';$('card-lookup-page').hidden=true;render();window.scrollTo({top:0,behavior:'smooth'});}
+function stopCardScanner(){if(scannerStream){for(const track of scannerStream.getTracks())track.stop();scannerStream=null;}const video=$('scanner-video');if(video)video.srcObject=null;if($('scanner-camera-wrap'))$('scanner-camera-wrap').hidden=true;if($('scanner-start'))$('scanner-start').hidden=false;if($('scanner-capture'))$('scanner-capture').hidden=true;if($('scanner-close'))$('scanner-close').hidden=true;}
+async function startCardScanner(){
+ if(!isAndroidMobile())return;
+ if(!navigator.mediaDevices?.getUserMedia){$('scanner-status').textContent='Live camera access needs a secure HTTPS address on Android. You can still use “Take or choose a photo” below.';return;}
+ try{scannerStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});const video=$('scanner-video');video.srcObject=scannerStream;await video.play();$('scanner-camera-wrap').hidden=false;$('scanner-start').hidden=true;$('scanner-capture').hidden=false;$('scanner-close').hidden=false;$('scanner-status').textContent='Hold one card upright inside the guide with its name visible, then capture it.';}
+ catch(err){const secure=window.isSecureContext;$('scanner-status').textContent=!secure?'Live camera access needs HTTPS on Android. You can still use “Take or choose a photo” below.':err.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser settings, or choose a photo below.':'Could not open the camera. Choose a photo of the card instead.';}
+}
+function loadOcrWorker(){
+ if(!ocrScriptPromise)ocrScriptPromise=new Promise((resolve,reject)=>{if(window.Tesseract){resolve(window.Tesseract);return;}const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js';script.onload=()=>resolve(window.Tesseract);script.onerror=()=>reject(Error('Could not load the on-device text reader. Check your internet connection and try again.'));document.head.append(script);});
+ if(!ocrWorkerPromise)ocrWorkerPromise=ocrScriptPromise.then(Tesseract=>{if(!Tesseract?.createWorker)throw Error('The on-device text reader did not start.');return Tesseract.createWorker('eng');}).catch(err=>{ocrWorkerPromise=null;throw err;});
+ return ocrWorkerPromise;
+}
+function cleanOcrLine(line){return String(line||'').replace(/[|{}\[\]<>~`^_*]/g,' ').replace(/\s+/g,' ').trim();}
+async function readCardImage(source,width,height){
+ if(scannerBusy)return;scannerBusy=true;$('scanner-capture').disabled=true;$('scanner-status').textContent='Reading the card name on this device…';
+ try{const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,width,height);const worker=await loadOcrWorker(),{data}=await worker.recognize(canvas),lines=(data.lines||[]).map(line=>({text:cleanOcrLine(line.text),y:Number(line.bbox?.y0)||0,confidence:Number(line.confidence)||0})).filter(line=>line.text.length>=3&&line.text.length<=64).sort((a,b)=>a.y-b.y),candidate=lines.find(line=>/[A-Za-z]/.test(line.text)&&line.confidence>=15)?.text||lines.find(line=>/[A-Za-z]/.test(line.text))?.text||'';if(!candidate)throw Error('I couldn’t read a card name. Try steadier lighting, move closer, or type the name below.');$('card-lookup-input').value=candidate;$('card-lookup-suggestions').hidden=true;$('scanner-search').hidden=false;$('scanner-status').textContent='Check the recognized name, edit it if needed, then search Scryfall.';$('card-lookup-input').focus();}
+ catch(err){$('scanner-status').textContent=err.message||'Could not read the card name. Try a clearer photo or type it below.';}
+ finally{$('scanner-capture').disabled=false;scannerBusy=false;}
+}
+async function fuzzyScanLookup(){const name=$('card-lookup-input').value.trim();if(!name)return;const btn=$('scanner-search');btn.disabled=true;$('scanner-status').textContent='Matching the scanned name on Scryfall…';try{const u=new URL('https://api.scryfall.com/cards/named');u.searchParams.set('fuzzy',name);u.searchParams.set('game','paper');const r=await fetch(u,{headers:{Accept:'application/json'}}),data=await r.json();if(!r.ok)throw Error(data.details||'No likely Scryfall match. Edit the name or use regular search.');$('card-lookup-input').value=data.name;await runCardLookup(data.name);if(lookedUpCard)$('scanner-status').textContent='Scryfall match found. Review the card below before adding it.';}catch(err){$('scanner-status').textContent=navigator.onLine?err.message:'You are offline. Card lookup requires an internet connection.';}finally{btn.disabled=false;}}
 async function runCardLookup(nameOverride=null){
  const q=(nameOverride??$('card-lookup-input').value).trim();if(!q)return;
  $('card-lookup-suggestions').hidden=true;
@@ -314,13 +339,19 @@ $('start-page').onchange=()=>{const page=$('start-page').value;if(!START_PAGES.h
 $('accept-latest-conflicts').onclick=async()=>{const pending=records(events).filter(r=>r.conflict);if(!pending.length)return;if(!await confirmAction(`Accept the newest timestamped version for all ${pending.length} conflicting cards?`))return;const changes=pending.map(r=>{const latest=r.heads.reduce((best,h)=>Date.parse(h.at)>Date.parse(best.at)?h:best,r.heads[0]);return {id:crypto.randomUUID(),recordId:r.id,parents:r.heads.map(h=>h.id),at:new Date().toISOString(),value:latest.value};});try{await commit(changes);toast(`Accepted the latest version for ${pending.length} cards.`);}catch(err){report(err);}};
 $('mobile-bottom-nav').onclick=e=>{const b=e.target.closest('[data-mobile-nav]');if(b)$(b.dataset.mobileNav)?.click();};
 $('home-nav').onclick=()=>{currentPage='home';selectedDeck='';render();window.scrollTo({top:0,behavior:'smooth'});};$('home-open-collection').onclick=()=>$('collection-nav').click();$('home-lookup-card').onclick=openCardLookup;
+$('lookup-page-back').onclick=closeCardLookup;$('add-page-scan').onclick=openCardLookup;
+$('scanner-start').onclick=startCardScanner;$('scanner-close').onclick=stopCardScanner;
+$('scanner-capture').onclick=()=>{const video=$('scanner-video');if(video.videoWidth&&video.videoHeight)readCardImage(video,video.videoWidth,video.videoHeight);};
+$('scanner-photo-button').onclick=()=>$('scanner-photo').click();
+$('scanner-photo').onchange=async()=>{const file=$('scanner-photo').files?.[0];if(!file)return;try{const bitmap=await createImageBitmap(file);await readCardImage(bitmap,bitmap.width,bitmap.height);bitmap.close?.();}catch(err){$('scanner-status').textContent=err.message||'Could not open that photo. Try another image.';}finally{$('scanner-photo').value='';}};
+$('scanner-search').onclick=fuzzyScanLookup;
 $('card-lookup-input').oninput=()=>{const box=$('card-lookup-suggestions'),hits=filterCatalogMatches($('card-lookup-input').value);if(!hits.length){box.hidden=true;box.innerHTML='';return;}box.innerHTML=hits.map(name=>`<button type="button" class="lookup-suggestion" role="option" data-lookup-suggest="${esc(name)}">${esc(name)}</button>`).join('');box.hidden=false;};
 $('card-lookup-suggestions').onclick=e=>{const b=e.target.closest('[data-lookup-suggest]');if(!b)return;$('card-lookup-input').value=b.dataset.lookupSuggest;runCardLookup(b.dataset.lookupSuggest);};
 $('card-lookup-form').onsubmit=e=>{e.preventDefault();runCardLookup();};
 $('card-lookup-result').onclick=async e=>{
  if(!lookedUpCard)return;
- if(e.target.closest('#lookup-add-collection')){const {card,raw}=lookedUpCard;$('card-lookup-dialog').close();edit(card);const options=$('finish').options;for(const o of options)o.disabled=!raw.finishes.includes(o.value);return;}
- if(e.target.closest('#lookup-add-shopping')){const {card}=lookedUpCard;try{await commit([{id:crypto.randomUUID(),recordId:crypto.randomUUID(),parents:[],at:new Date().toISOString(),value:{...card,quantity:1,notOwned:true,location:'Not owned',deckCounts:{}}}]);$('card-lookup-dialog').close();toast(`${card.name} added to Shopping list as Not Owned.`);}catch(err){report(err);}}
+ if(e.target.closest('#lookup-add-collection')){const {card,raw}=lookedUpCard;closeCardLookup();edit(card);const options=$('finish').options;for(const o of options)o.disabled=!raw.finishes.includes(o.value);return;}
+ if(e.target.closest('#lookup-add-shopping')){const {card}=lookedUpCard;try{await commit([{id:crypto.randomUUID(),recordId:crypto.randomUUID(),parents:[],at:new Date().toISOString(),value:{...card,quantity:1,notOwned:true,location:'Not owned',deckCounts:{}}}]);closeCardLookup();toast(`${card.name} added to Shopping list as Not Owned.`);}catch(err){report(err);}}
 };
 $('home-stats').onclick=e=>{const btn=e.target.closest('[data-stat-pin]');if(!btn)return;const id=btn.dataset.statPin;if(favStats.includes(id)){favStats=favStats.filter(x=>x!==id);}else if(favStats.length>=3){toast('You can pin up to 3 favourite stats. Unpin one first.');return;}else{favStats=[...favStats,id];}localStorage.setItem(FAV_STATS_KEY,JSON.stringify(favStats));render();};
 $('open-information').onclick=()=>{currentPage='information';selectedDeck='';render();window.scrollTo({top:0,behavior:'smooth'});};$('information-home').onclick=()=>$('home-nav').click();
