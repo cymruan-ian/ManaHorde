@@ -10,6 +10,7 @@ import {
  shoppingCsv,
  sumCardValues,
  groupCollectionEntries,
+ pickCollectionStats,
  validateEvents
 } from '../core.js';
 
@@ -118,4 +119,15 @@ test('groupCollectionEntries combines versions by default and keeps distinct ver
  assert.equal(ungrouped.length,2);
  assert.equal(ungrouped[0].quantity,3);
  assert.equal(ungrouped[1].quantity,1);
+});
+
+test('pickCollectionStats selects 4 analytics plus Collection Value as the 5th stat',()=>{
+ const owned=[{id:'a',value:{...baseCard,name:'Sol Ring',quantity:2,rarity:'uncommon',set:'c21',colorIdentity:['C'],validated:true}}];
+ const prices=new Map([['a',{gbp:2.5,eur:2.9}]]);
+ const stats=pickCollectionStats({ownedClean:owned,allCards:owned,decks:[],conflicts:[],prices});
+ assert.equal(stats.length,5);
+ assert.equal(new Set(stats.map(s=>s.id)).size,5);
+ assert.equal(stats[4].id,'value');
+ assert.equal(stats[4].label,'COLLECTION VALUE');
+ assert.equal(stats[4].value,'£5.00');
 });

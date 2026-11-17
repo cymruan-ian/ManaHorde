@@ -1,4 +1,4 @@
-import {records,mergeEvents,parseBackup,backup,cardFromScryfall,scryfallImageUrl as imageUrl,artUrlFromCard as artUrl,allowsMultipleCopies,cardTypeGroup,cardFitsDeck,validCommanderPair,validateCommanderDeck,suggestDeckPlaystyle,shoppingCsv,sumCardValues,groupCollectionEntries} from './core.js';
+import {records,mergeEvents,parseBackup,backup,cardFromScryfall,scryfallImageUrl as imageUrl,artUrlFromCard as artUrl,allowsMultipleCopies,cardTypeGroup,cardFitsDeck,validCommanderPair,validateCommanderDeck,suggestDeckPlaystyle,shoppingCsv,sumCardValues,groupCollectionEntries,pickCollectionStats} from './core.js';
 import {prepareGoogle,authorize,connected,disconnect,syncDrive,tokenExpiresAt} from './drive.js';
 import {priceCards} from './prices.js';
 const $=id=>document.getElementById(id);
@@ -8,7 +8,7 @@ let activeDeck='',selectedDeck='',deckSearch='',deckSearchOpen=false,deckSort='d
 const deckCtasKey=()=>matchMedia('(pointer: coarse)').matches||innerWidth<=900?'arcana-hide-deck-ctas-mobile':'arcana-hide-deck-ctas-desktop';
 const isDeckCtasVisible=()=>localStorage.getItem(deckCtasKey())!=='true';
 const DEFAULT_CLIENT_ID='713228552059-d3nb08komhcf7o4vtvsd2oma8g03ooch.apps.googleusercontent.com';
-let clientId=localStorage.getItem('arcana-client-id')||DEFAULT_CLIENT_ID,geminiApiKey=localStorage.getItem('arcana-gemini-key')||'',autoConnectDrive=localStorage.getItem('arcana-auto-connect')==='true',autoSyncDrive=localStorage.getItem('arcana-auto-sync')==='true',lastOnlineGuide='',lookedUpCard=null,autoSyncTimer,keepAliveTimer;
+let clientId=localStorage.getItem('arcana-client-id')||DEFAULT_CLIENT_ID,geminiApiKey=localStorage.getItem('arcana-gemini-key')||'',autoConnectDrive=localStorage.getItem('arcana-auto-connect')==='true',autoSyncDrive=localStorage.getItem('arcana-auto-sync')==='true',lastOnlineGuide='',lookedUpCard=null,autoSyncTimer,keepAliveTimer,homeStatOrder=null;
 async function confirmAction(message){
  const modal=$('confirm-dialog');$('confirm-message').textContent=message;
  return new Promise(resolve=>{modal.addEventListener('close',()=>resolve(modal.returnValue==='yes'),{once:true});modal.showModal();});
@@ -31,10 +31,11 @@ function placeholder(name){return `<div class="card-placeholder"><span>◇</span
 function flipButton(v){const front=imageUrl(v?.image),back=imageUrl(v?.backImage);return front&&back?`<button type="button" class="flip-card-btn" data-flip-front="${esc(front)}" data-flip-back="${esc(back)}" aria-label="Flip card" title="Flip card">↻</button>`:'';}
 function render(){
  const recordsNow=records(events),decks=recordsNow.filter(r=>(r.value||r.heads.find(h=>h.value)?.value)?.kind==='deck'),all=recordsNow.filter(r=>(r.value||r.heads.find(h=>h.value)?.value)?.kind!=='deck'),active=all.filter(r=>r.value!==null||r.conflict),clean=all.filter(r=>r.value&&!r.conflict),ownedActive=active.filter(r=>!(r.value||r.heads.find(h=>h.value)?.value)?.notOwned),ownedClean=clean.filter(r=>!r.value.notOwned);
- $('total').textContent=ownedClean.reduce((s,r)=>s+r.value.quantity,0).toLocaleString();$('unique').textContent=new Set(ownedClean.map(r=>r.value.scryfallId||r.value.name.toLowerCase())).size.toLocaleString();$('foils').textContent=ownedClean.filter(r=>r.value.finish!=='nonfoil').reduce((s,r)=>s+r.value.quantity,0).toLocaleString();$('nav-count').textContent=ownedActive.length;
- const pending=ownedClean.filter(r=>!r.value.validated).length,conflicts=all.filter(r=>r.conflict),colValue=sumCardValues(ownedClean,cardPrices);
- $('collection-status').textContent=conflicts.length?'Review edits':pending?'Validation pending':'All organised';$('pending-count').textContent=conflicts.length?`${conflicts.length} conflicting entries · excluded from totals`:pending?`${pending} awaiting Scryfall validation`:'No cards awaiting validation';
- $('collection-value').textContent=colValue.pricedCount?`£${colValue.total.toFixed(2)}`:'—';$('priced-count').textContent=colValue.pricedCount?`Across ${colValue.pricedCount} priced ${colValue.pricedCount===1?'card':'cards'}`:'No priced cards yet';
+ $('nav-count').textContent=ownedActive.length;
+ const conflicts=all.filter(r=>r.conflict);
+ const homeStats=pickCollectionStats({ownedClean,allCards:all,decks,conflicts,prices:cardPrices,order:homeStatOrder});
+ if(!homeStatOrder)homeStatOrder=homeStats.slice(0,4).map(s=>s.id);
+ $('home-stats').innerHTML=homeStats.map((s,i)=>`<div><span>${esc(s.label)}</span><strong${i===4?' id="collection-value"':''}${s.isStatus?' class="status-text"':''}>${esc(s.value)}</strong><small>${esc(s.sub)}</small></div>`).join('');
  const deckSelect=$('deck-filter'),oldDeck=deckSelect.value;deckSelect.innerHTML='<option value="">All collection</option>'+decks.filter(d=>d.value).sort((a,b)=>Number(!!b.value.favourite)-Number(!!a.value.favourite)).map(d=>`<option value="${esc(d.id)}">${esc(d.value.name)}</option>`).join('');if(decks.some(d=>d.id===oldDeck))deckSelect.value=oldDeck;activeDeck=deckSelect.value;
  const q=$('filter').value.toLowerCase().trim(),finish=$('finish-filter').value,ownedSuper=terms($('owned-supertype').value),ownedTypes=terms($('owned-type').value),ownedSub=terms($('owned-subtype').value),identity=[...document.querySelectorAll('input[name="owned-identity"]:checked')].map(x=>x.value.toUpperCase()),onlyLegal=$('owned-legal').checked;
  let visible=ownedActive.filter(r=>{const v=r.value||r.heads.find(h=>h.value)?.value;if(!v)return false;const assigned=v.deckCounts?.[activeDeck]||0;const parts=String(v.type||'').toLowerCase().split('—').map(s=>s.trim()),left=parts[0]||'',right=parts[1]||'',passTerms=(list,source)=>list.every(t=>source.includes(t));return (!activeDeck||assigned>0)&&(!finish||v.finish===finish)&&[v.name,v.set,v.setName,v.location,v.type,v.notes].some(s=>String(s||'').toLowerCase().includes(q))&&passTerms(ownedSuper,left)&&passTerms(ownedTypes,left)&&passTerms(ownedSub,right)&&(!identity.length||(v.colorIdentity&&identity.every(c=>v.colorIdentity.includes(c))))&&(!onlyLegal||v.legalities?.commander==='legal');});

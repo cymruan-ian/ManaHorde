@@ -119,3 +119,46 @@ export function groupCollectionEntries(rows,{ungroup=false,activeDeck=''}={}){
  }
  return [...groups.values()].map(g=>({...g,printingsCount:new Set(g.rows.map(r=>{const v=r.value||r.heads.find(h=>h.value)?.value;return `${v.scryfallId||v.set||''}:${v.number||''}`})).size}));
 }
+export function pickCollectionStats({ownedClean=[],allCards=[],decks=[],conflicts=[],prices=new Map(),order=null}){
+ const qty=r=>Number(r.value?.quantity)||0;
+ const totalCards=ownedClean.reduce((s,r)=>s+qty(r),0);
+ const uniquePrintings=new Set(ownedClean.map(r=>r.value.scryfallId||r.value.name.toLowerCase())).size;
+ const foils=ownedClean.filter(r=>r.value.finish!=='nonfoil').reduce((s,r)=>s+qty(r),0);
+ const pending=ownedClean.filter(r=>!r.value.validated).length;
+ const validDecks=decks.filter(d=>d.value&&!d.conflict);
+ const legalDecks=validDecks.filter(d=>validateCommanderDeck(d,ownedClean.filter(r=>(r.value.deckCounts?.[d.id]||0)>0)).valid).length;
+ const favDecks=validDecks.filter(d=>d.value.favourite).length;
+ const sets=new Set(ownedClean.map(r=>r.value.set).filter(Boolean)).size;
+ const highRarity=ownedClean.filter(r=>['rare','mythic'].includes(String(r.value.rarity||'').toLowerCase())).reduce((s,r)=>s+qty(r),0);
+ const legendaries=ownedClean.filter(r=>/\blegendary\b/i.test(r.value.type||'')).reduce((s,r)=>s+qty(r),0);
+ const creatures=ownedClean.filter(r=>/\bcreature\b/i.test(r.value.type||'')).reduce((s,r)=>s+qty(r),0);
+ const commanders=ownedClean.filter(r=>r.value.commanderEligible).reduce((s,r)=>s+qty(r),0);
+ const inDecks=ownedClean.reduce((s,r)=>s+Object.values(r.value.deckCounts||{}).reduce((a,n)=>a+n,0),0);
+ const wanted=allCards.filter(r=>r.value?.notOwned&&!r.conflict).reduce((s,r)=>s+(Number(r.value.quantity)||1),0);
+ const colorCounts={W:0,U:0,B:0,R:0,G:0},colorNames={W:'White',U:'Blue',B:'Black',R:'Red',G:'Green'};
+ for(const r of ownedClean)for(const c of r.value.colorIdentity||[])if(colorCounts[c]!==undefined)colorCounts[c]+=qty(r);
+ const topColor=Object.entries(colorCounts).sort((a,b)=>b[1]-a[1])[0];
+ let topCard=null,topPrice=0;
+ for(const r of ownedClean){const p=prices.get(r.id)?.gbp||0;if(p>topPrice){topPrice=p;topCard=r.value.name;}}
+ const pool=[
+  {id:'total',label:'TOTAL CARDS',value:totalCards.toLocaleString(),sub:'Across your collection'},
+  {id:'unique',label:'UNIQUE PRINTINGS',value:uniquePrintings.toLocaleString(),sub:'Every edition has a place'},
+  {id:'foils',label:'FOIL & ETCHED',value:foils.toLocaleString(),sub:'A little extra shine'},
+  {id:'status',label:'COLLECTION STATUS',value:conflicts.length?'Review edits':pending?'Pending':'All organised',sub:conflicts.length?`${conflicts.length} conflicts`:pending?`${pending} awaiting validation`:'No cards awaiting validation',isStatus:true},
+  {id:'decks',label:'COMMANDER DECKS',value:validDecks.length.toLocaleString(),sub:`${favDecks} starred ${favDecks===1?'favourite':'favourites'}`},
+  {id:'legalDecks',label:'LEGAL DECKS',value:`${legalDecks}/${validDecks.length}`,sub:'Passing Commander rules'},
+  {id:'sets',label:'UNIQUE SETS',value:sets.toLocaleString(),sub:'Planes & expansions'},
+  {id:'rarity',label:'RARE & MYTHIC',value:highRarity.toLocaleString(),sub:'High-rarity cards'},
+  {id:'legendary',label:'LEGENDARIES',value:legendaries.toLocaleString(),sub:'Heroes & legends'},
+  {id:'creatures',label:'CREATURES',value:creatures.toLocaleString(),sub:'Ready for combat'},
+  {id:'commanders',label:'COMMANDERS',value:commanders.toLocaleString(),sub:'Eligible deck leaders'},
+  {id:'inDecks',label:'IN DECKS',value:inDecks.toLocaleString(),sub:'Copies assigned to decks'},
+  {id:'wanted',label:'SHOPPING LIST',value:wanted.toLocaleString(),sub:'Cards marked Not Owned'},
+  {id:'topColor',label:'TOP MANA COLOUR',value:topColor&&topColor[1]>0?colorNames[topColor[0]]:'Colorless',sub:topColor&&topColor[1]>0?`${topColor[1].toLocaleString()} cards in identity`:'Add coloured cards'},
+  {id:'topCard',label:'TOP VALUED CARD',value:topCard?`£${topPrice.toFixed(2)}`:'—',sub:topCard||'Prices loading or unavailable'}
+ ];
+ const keys=Array.isArray(order)&&order.length>=4?order:pool.map(s=>s.id).sort(()=>Math.random()-0.5).slice(0,4);
+ const chosen=keys.map(id=>pool.find(s=>s.id===id)).filter(Boolean).slice(0,4);
+ const colValue=sumCardValues(ownedClean,prices);
+ return [...chosen,{id:'value',label:'COLLECTION VALUE',value:colValue.pricedCount?`£${colValue.total.toFixed(2)}`:'—',sub:colValue.pricedCount?`Across ${colValue.pricedCount} priced ${colValue.pricedCount===1?'card':'cards'}`:'No priced cards yet'}];
+}
