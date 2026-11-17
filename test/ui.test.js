@@ -21,6 +21,7 @@ test('index.html has home action labels, deck toggles, type sort, suggestions, s
  assert.match(html,/id="home-lookup-card"/);
  assert.match(html,/id="card-lookup-dialog"/);
  assert.match(html,/id="ungroup-cards"/);
+ assert.match(html,/id="decks-page"/);
  assert.doesNotMatch(html,/class="breadcrumb"/);
 });
 
