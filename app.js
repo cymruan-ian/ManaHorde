@@ -17,7 +17,7 @@ async function confirmAction(message){
 }
 const channel=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('arcana-vault'):null;
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,6500);}
-function show(id){$(id).showModal();}
+function show(id){const d=$(id);if(!d.open)d.showModal();}
 function report(e){console.error(e);toast(e.message||'Something went wrong. Please try again.');}
 async function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open('arcana-vault',1);req.onupgradeneeded=()=>req.result.createObjectStore('state');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result);req.onblocked=()=>toast('Close other Arcana Vault tabs, then reload.');});}
 async function read(){return new Promise((resolve,reject)=>{const tx=db.transaction('state');const req=tx.objectStore('state').get('events');req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error);});}
@@ -427,7 +427,7 @@ $('card-form').oninput=e=>{if(e.target.id==='quantity'){renderDeckAssignments({.
 $('card-form').onsubmit=async e=>{e.preventDefault();const button=$('save-card');button.disabled=true;try{const value=formValue(),assigned=Object.values(value.deckCounts).reduce((a,b)=>a+b,0);if(assigned>value.quantity)throw Error(`You have assigned ${assigned} copies to decks, but own only ${value.quantity}.`);await commit([revision(value)]);$('edit-dialog').close();toast('Card saved on this device.');navigator.storage?.persist?.().catch(()=>{});}catch(e){report(e);}finally{button.disabled=false;}};
 $('delete-card').onclick=async()=>{if(!await confirmAction(`Delete this entry for ${draft.name}? This deletion will be included in your next sync.`))return;try{await commit([revision(null)]);$('edit-dialog').close();toast('Entry deleted.');}catch(e){report(e);}};
 $('validate-card').onclick=()=>{const ctx={value:formValue(),id:editing,heads};$('edit-dialog').close();openLookup(ctx);};
-$('home-backup').onclick=()=>{updateDrive();show('backup-dialog');};$('home-settings').onclick=()=>{$('client-id').value=clientId;$('gemini-api-key').value=geminiApiKey;$('drive-auto-connect').checked=autoConnectDrive;$('drive-auto-sync').checked=autoSyncDrive;show('settings-dialog');};
+$('settings-open-backup').onclick=()=>{updateDrive();show('backup-dialog');};$('home-settings').onclick=()=>{$('client-id').value=clientId;$('gemini-api-key').value=geminiApiKey;$('drive-auto-connect').checked=autoConnectDrive;$('drive-auto-sync').checked=autoSyncDrive;show('settings-dialog');};
 $('save-settings').onclick=()=>{clientId=$('client-id').value.trim();geminiApiKey=$('gemini-api-key').value.trim();autoConnectDrive=$('drive-auto-connect').checked;autoSyncDrive=$('drive-auto-sync').checked;if(clientId&&!/^[\w.-]+\.apps\.googleusercontent\.com$/.test(clientId)){toast('Enter a valid Google OAuth web client ID.');return;}disconnect();clearTimeout(keepAliveTimer);localStorage.setItem('arcana-client-id',clientId);localStorage.setItem('arcana-gemini-key',geminiApiKey);localStorage.setItem('arcana-auto-connect',String(autoConnectDrive));localStorage.setItem('arcana-auto-sync',String(autoSyncDrive));updateDrive();if(clientId)prepareGoogle().then(()=>{if(autoConnectDrive)return connectDriveOnLoad();}).catch(()=>{});toast('Settings saved.');};
 function scheduleDriveKeepAlive(){
  clearTimeout(keepAliveTimer);
