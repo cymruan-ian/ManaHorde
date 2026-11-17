@@ -446,7 +446,8 @@ function scheduleAutoSync(){
  autoSyncTimer=setTimeout(()=>runDriveSync({quiet:true}),2500);
 }
 async function runDriveSync({quiet=false}={}){
- if(driveBusy||!connected())return;
+ if(!connected())return;
+ if(driveBusy){if(!quiet)toast('Drive sync is already in progress…');return;}
  driveBusy=true;$('sync-drive').disabled=true;$('disconnect-drive').disabled=true;$('drive-status').textContent='Merging snapshots and saving a dated backup…';
  try{
   const merged=await syncDrive(events);
