@@ -15,13 +15,28 @@ export function authorize(clientId,{silent=false}={}){return new Promise((resolv
 export function connected(){return !!token&&Date.now()<expires-60000;}
 export function tokenExpiresAt(){return expires;}
 export function disconnect(){if(token&&globalThis.google)google.accounts.oauth2.revoke(token,()=>{});token='';expires=0;}
-async function request(url,options={}){if(!connected())throw Error('Connect Google Drive again; your session has expired.');const signal=options.signal||(typeof AbortSignal!=='undefined'&&AbortSignal.timeout?AbortSignal.timeout(25000):undefined);const r=await fetch(url,{...options,signal,headers:{...options.headers,Authorization:`Bearer ${token}`}});if(!r.ok){if(r.status===401){token='';throw Error('Google session expired. Connect again.');}throw Error(`Google Drive request failed (${r.status}). Your local collection is safe.`);}return r;}
+async function request(url,options={}){
+ if(!connected())throw Error('Connect Google Drive again; your session has expired.');
+ const signal=options.signal||(typeof AbortSignal!=='undefined'&&AbortSignal.timeout?AbortSignal.timeout(25000):undefined);
+ let r;
+ try{r=await fetch(url,{...options,signal,headers:{...options.headers,Authorization:`Bearer ${token}`}});}
+ catch(e){if(e?.name==='TimeoutError'||e?.name==='AbortError')throw Error('Google Drive request timed out after 25s. Check your connection.');throw Error(`Network error contacting Google Drive: ${e?.message||'offline'}`);}
+ if(!r.ok){
+  if(r.status===401){token='';throw Error('Google session expired. Connect again.');}
+  let detail='';try{const txt=await r.text();detail=JSON.parse(txt)?.error?.message||txt.slice(0,120);}catch{}
+  throw Error(`Google Drive request failed (${r.status}${detail?`: ${detail}`:''}). Your local collection is safe.`);
+ }
+ return r;
+}
 async function list(q){let files=[],page;do{const p=new URLSearchParams({q,fields:'nextPageToken,files(id,name,mimeType)',pageSize:'1000'});if(page)p.set('pageToken',page);const data=await(await request(`https://www.googleapis.com/drive/v3/files?${p}`)).json();files.push(...data.files);page=data.nextPageToken;}while(page);return files;}
-export async function syncDrive(localEvents){
+export async function syncDrive(localEvents,onProgress=()=>{}){
  // Immutable snapshots avoid destructive read/modify/write races between devices.
+ onProgress('Listing snapshots in Google Drive…');
  const files=await list("trashed = false and appProperties has { key='arcanaVault' and value='snapshot-v1' }");
+ onProgress(`Found ${files.length} snapshot${files.length===1?'':'s'} in Drive.`);
  const parsedGroups=[];
  for(let i=0;i<files.length;i+=5){
+  onProgress(`Downloading snapshots (${Math.min(i+5,files.length)}/${files.length})…`);
   const batch=await Promise.all(files.slice(i,i+5).map(async f=>{
    const r=await request(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(f.id)}?alt=media`);
    const t=await r.text();if(t.length>30_000_000)throw Error('A Drive backup is too large to import.');
@@ -29,11 +44,16 @@ export async function syncDrive(localEvents){
   }));
   parsedGroups.push(...batch);
  }
+ onProgress(`Merging ${parsedGroups.length} snapshot${parsedGroups.length===1?'':'s'} with ${localEvents.length} local revisions…`);
  const merged=mergeEvents(localEvents,...parsedGroups);
+ onProgress('Checking backup folder in Drive…');
  let folders=await list("trashed = false and mimeType = 'application/vnd.google-apps.folder' and appProperties has { key='arcanaVault' and value='folder-v1' }");
- if(!folders.length){const r=await request('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Arcana Vault Backups',mimeType:'application/vnd.google-apps.folder',appProperties:{arcanaVault:'folder-v1'}})});folders=[await r.json()];}
+ if(!folders.length){onProgress('Creating Arcana Vault Backups folder…');const r=await request('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Arcana Vault Backups',mimeType:'application/vnd.google-apps.folder',appProperties:{arcanaVault:'folder-v1'}})});folders=[await r.json()];}
  const stamp=new Date().toISOString().replace(/[:.]/g,'-'),boundary=`arcana_${crypto.randomUUID()}`;
  const metadata=JSON.stringify({name:`Arcana Vault ${stamp}.json`,parents:[folders[0].id],appProperties:{arcanaVault:'snapshot-v1'}});
  const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${backup(merged)}\r\n--${boundary}--`;
- await request('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body});return merged;
+ onProgress(`Uploading backup snapshot (${merged.length} revisions)…`);
+ await request('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body});
+ onProgress('Upload complete.');
+ return merged;
 }

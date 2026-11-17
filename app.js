@@ -448,19 +448,29 @@ function scheduleAutoSync(){
 async function runDriveSync({quiet=false}={}){
  if(!connected()){updateDrive();if(!quiet){$('drive-status').textContent='Session not connected. Tap Connect Google Drive first.';toast('Connect Google Drive first.');}return;}
  if(driveBusy){if(!quiet)toast('Drive sync is already in progress…');return;}
- driveBusy=true;$('sync-drive').disabled=true;$('home-sync-drive').disabled=true;$('home-sync-drive').classList.add('is-syncing');$('disconnect-drive').disabled=true;$('drive-status').textContent='Merging snapshots and saving a dated backup…';
+ driveBusy=true;$('sync-drive').disabled=true;$('home-sync-drive').disabled=true;$('home-sync-drive').classList.add('is-syncing');$('disconnect-drive').disabled=true;
+ const logEl=$('drive-log'),logStep=msg=>{
+  $('drive-status').textContent=msg;
+  if(logEl){const li=document.createElement('li');li.textContent=`${new Date().toLocaleTimeString()} · ${msg}`;logEl.appendChild(li);logEl.hidden=false;logEl.scrollTop=logEl.scrollHeight;}
+  if(!quiet&&!$('backup-dialog').open)toast(msg);
+ };
+ if(logEl){logEl.innerHTML='';logEl.hidden=true;}
+ logStep('Starting Google Drive sync…');
  let syncMessage='';
  try{
-  const merged=await syncDrive(events);
+  const merged=await syncDrive(events,logStep);
+  logStep(`Saving ${merged.length} merged revisions locally…`);
   await commit(merged,{fromSync:true});
   const now=new Date().toISOString();
   localStorage.setItem('arcana-last-sync',now);
   render();
   syncMessage=`Sync complete · ${merged.length} revisions · ${new Date(now).toLocaleTimeString()}`;
+  logStep(`✅ ${syncMessage}`);
   if(!quiet)toast('Drive sync complete. A dated backup was saved.');
  }catch(e){
   syncMessage=`Sync failed: ${e.message||'Unknown error'}`;
-  if(!quiet)report(e);else console.info('Auto sync skipped:',e);
+  logStep(`❌ ${syncMessage}`);
+  if(!quiet)toast(syncMessage);else console.info('Auto sync skipped:',e);
  }finally{
   driveBusy=false;$('sync-drive').disabled=false;$('home-sync-drive').disabled=false;$('home-sync-drive').classList.remove('is-syncing');$('disconnect-drive').disabled=false;updateDrive();
   if(syncMessage)$('drive-status').textContent=syncMessage;
