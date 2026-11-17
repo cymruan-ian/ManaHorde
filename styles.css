@@ -238,3 +238,6 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 html:has(dialog[open]),body:has(dialog[open]){overflow:hidden;overscroll-behavior:none}
 dialog{overscroll-behavior:contain}
 dialog::backdrop{touch-action:none}
+.card-deck-thumb-btn{width:28px;height:28px;padding:0;border:1.5px solid #c8d6cc;border-radius:50%;overflow:hidden;background:#e8e1d4;color:#9d731f;font-size:12px;display:grid;place-items:center;flex:none;cursor:pointer;transition:transform .15s,border-color .15s}
+.card-deck-thumb-btn:hover{transform:scale(1.08);border-color:#176b53}
+.card-deck-thumb-btn img{width:100%;height:100%;object-fit:cover;display:block}
