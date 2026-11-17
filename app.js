@@ -485,7 +485,7 @@ $('home-clear-cache').onclick=async()=>{
  try{
   if('caches'in globalThis){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}
   if('serviceWorker'in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));}
-  location.reload();
+  location.replace(`${location.pathname}?refresh=${Date.now()}${location.hash}`);
  }catch(e){report(e);}
 };
 $('export').onclick=()=>{const blob=new Blob([backup(events)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`arcana-vault-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);$('backup-status').textContent='Backup download started. Keep the file somewhere safe.';};
