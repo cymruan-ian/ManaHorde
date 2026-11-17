@@ -124,7 +124,6 @@ export function pickCollectionStats({ownedClean=[],allCards=[],decks=[],conflict
  const totalCards=ownedClean.reduce((s,r)=>s+qty(r),0);
  const uniquePrintings=new Set(ownedClean.map(r=>r.value.scryfallId||r.value.name.toLowerCase())).size;
  const foils=ownedClean.filter(r=>r.value.finish!=='nonfoil').reduce((s,r)=>s+qty(r),0);
- const pending=ownedClean.filter(r=>!r.value.validated).length;
  const validDecks=decks.filter(d=>d.value&&!d.conflict);
  const legalDecks=validDecks.filter(d=>validateCommanderDeck(d,ownedClean.filter(r=>(r.value.deckCounts?.[d.id]||0)>0)).valid).length;
  const favDecks=validDecks.filter(d=>d.value.favourite).length;
@@ -144,7 +143,6 @@ export function pickCollectionStats({ownedClean=[],allCards=[],decks=[],conflict
   {id:'total',label:'TOTAL CARDS',value:totalCards.toLocaleString(),sub:'Across your collection'},
   {id:'unique',label:'UNIQUE PRINTINGS',value:uniquePrintings.toLocaleString(),sub:'Every edition has a place'},
   {id:'foils',label:'FOIL & ETCHED',value:foils.toLocaleString(),sub:'A little extra shine'},
-  {id:'status',label:'COLLECTION STATUS',value:conflicts.length?'Review edits':pending?'Pending':'All organised',sub:conflicts.length?`${conflicts.length} conflicts`:pending?`${pending} awaiting validation`:'No cards awaiting validation',isStatus:true},
   {id:'decks',label:'COMMANDER DECKS',value:validDecks.length.toLocaleString(),sub:`${favDecks} starred ${favDecks===1?'favourite':'favourites'}`},
   {id:'legalDecks',label:'LEGAL DECKS',value:`${legalDecks}/${validDecks.length}`,sub:'Passing Commander rules'},
   {id:'sets',label:'UNIQUE SETS',value:sets.toLocaleString(),sub:'Planes & expansions'},
