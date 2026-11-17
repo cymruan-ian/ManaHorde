@@ -217,6 +217,7 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 }
 #cards.cards,#deck-page .deck-card-grid{grid-template-columns:repeat(var(--collection-cols,3),minmax(0,1fr));gap:clamp(4px,calc(24px / var(--collection-cols,3)),12px)}
 #cards.cards .card,#deck-page .deck-card-grid .deck-display-card{min-width:0}
+#cards.cards .card{cursor:pointer}
 .collection-heading-actions{display:flex;align-items:center;gap:10px}
 .display-cols-popover{position:fixed;top:58px;right:12px;z-index:30;width:min(240px,82vw);padding:12px 14px;border:1px solid #dfd6c3;border-radius:14px;background:#fffdf8;color:#27302c;box-shadow:0 12px 32px rgba(23,39,31,.2)}
 .display-cols-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
