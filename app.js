@@ -470,6 +470,14 @@ function updateDrive(){$('connect-drive').hidden=connected();$('sync-drive').hid
 $('connect-drive').onclick=$('home-connect-drive').onclick=async()=>{try{if(!clientId){$('backup-dialog').close();$('client-id').value='';show('settings-dialog');return;}if(!globalThis.google?.accounts?.oauth2){await prepareGoogle();toast('Google sign-in is ready. Press Connect Google Drive again.');return;}await authorize(clientId);updateDrive();scheduleDriveKeepAlive();if(autoSyncDrive)await runDriveSync({quiet:true});toast('Drive connected. Press Sync now to merge and back up.');}catch(e){report(e);}};
 $('disconnect-drive').onclick=()=>{clearTimeout(keepAliveTimer);clearTimeout(autoSyncTimer);disconnect();updateDrive();toast('Google Drive disconnected.');};
 $('sync-drive').onclick=$('home-sync-drive').onclick=()=>runDriveSync({quiet:false});
+$('home-clear-cache').onclick=async()=>{
+ if(!await confirmAction('Clear cached app files and card images, then reload? Your saved collection and decks will stay safe.'))return;
+ try{
+  if('caches'in globalThis){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}
+  if('serviceWorker'in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));}
+  location.reload();
+ }catch(e){report(e);}
+};
 $('export').onclick=()=>{const blob=new Blob([backup(events)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`arcana-vault-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);$('backup-status').textContent='Backup download started. Keep the file somewhere safe.';};
 $('import').onclick=()=>$('import-file').click();$('empty-import').onclick=()=>{show('backup-dialog');$('import-file').click();};
 $('import-file').onchange=async()=>{try{const file=$('import-file').files[0];if(!file)return;if(file.size>30_000_000)throw Error('Choose a backup smaller than 30 MB.');const incoming=parseBackup(await file.text());const merged=mergeEvents(events,incoming);const added=merged.length-events.length;if(!added){toast('This backup is already in your collection.');return;}if(!await confirmAction(`Merge ${added} new revisions from this backup? Existing independent edits will be preserved for review.`))return;await commit(incoming);$('backup-status').textContent=`Merged ${added} revisions. Review any conflicting edits below.`;toast('Backup imported.');}catch(e){report(e);}finally{$('import-file').value='';}};

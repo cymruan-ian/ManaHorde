@@ -111,7 +111,7 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 .commander-guide-section p{margin:0;font-size:12.5px;color:#4a5850}
 .mobile-bottom-nav,.mobile-splash{display:none}
 .home-page .page-heading{margin-bottom:18px;flex-direction:row;align-items:center;justify-content:space-between}
-.home-drive-corner{flex:none;width:44px;height:44px}
+.home-drive-corner{flex:none;display:flex;align-items:center;gap:8px;height:44px}
 .home-drive-btn{width:44px;height:44px;min-height:44px;padding:0;border-radius:12px;background:#fffdf8;color:#176b53;box-shadow:0 2px 8px rgba(23,39,31,.1)}
 .home-drive-btn svg{width:22px;height:22px;display:block}
 .home-drive-btn.is-syncing svg{animation:spin-sync .9s linear infinite}
