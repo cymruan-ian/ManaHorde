@@ -25,6 +25,8 @@ test('index.html has home action labels, deck toggles, type sort, suggestions, s
  assert.match(html,/id="drive-auto-connect"/);
  assert.match(html,/id="drive-auto-sync"/);
  assert.match(html,/id="mobile-splash"/);
+ assert.match(html,/id="home-connect-drive"/);
+ assert.match(html,/id="home-sync-drive"/);
  assert.doesNotMatch(html,/class="breadcrumb"/);
 });
 

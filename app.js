@@ -448,7 +448,7 @@ function scheduleAutoSync(){
 async function runDriveSync({quiet=false}={}){
  if(!connected())return;
  if(driveBusy){if(!quiet)toast('Drive sync is already in progress…');return;}
- driveBusy=true;$('sync-drive').disabled=true;$('disconnect-drive').disabled=true;$('drive-status').textContent='Merging snapshots and saving a dated backup…';
+ driveBusy=true;$('sync-drive').disabled=true;$('home-sync-drive').disabled=true;$('home-sync-drive').classList.add('is-syncing');$('disconnect-drive').disabled=true;$('drive-status').textContent='Merging snapshots and saving a dated backup…';
  try{
   const merged=await syncDrive(events);
   await commit(merged,{fromSync:true});
@@ -456,12 +456,12 @@ async function runDriveSync({quiet=false}={}){
   render();
   if(!quiet)toast('Drive sync complete. A dated backup was saved.');
  }catch(e){if(!quiet)report(e);else console.info('Auto sync skipped:',e);}
- finally{driveBusy=false;$('sync-drive').disabled=false;$('disconnect-drive').disabled=false;updateDrive();}
+ finally{driveBusy=false;$('sync-drive').disabled=false;$('home-sync-drive').disabled=false;$('home-sync-drive').classList.remove('is-syncing');$('disconnect-drive').disabled=false;updateDrive();}
 }
-function updateDrive(){$('connect-drive').hidden=connected();$('sync-drive').hidden=!connected();$('disconnect-drive').hidden=!connected();$('drive-status').textContent=connected()?'Google Drive connected for this session.':clientId?'Ready to connect to Google Drive.':'Google Drive needs one-time setup. Open Settings & install to add your client ID.';}
-$('connect-drive').onclick=async()=>{try{if(!clientId){$('backup-dialog').close();$('client-id').value='';show('settings-dialog');return;}if(!globalThis.google?.accounts?.oauth2){await prepareGoogle();toast('Google sign-in is ready. Press Connect Google Drive again.');return;}await authorize(clientId);updateDrive();scheduleDriveKeepAlive();if(autoSyncDrive)await runDriveSync({quiet:true});toast('Drive connected. Press Sync now to merge and back up.');}catch(e){report(e);}};
+function updateDrive(){$('connect-drive').hidden=connected();$('sync-drive').hidden=!connected();$('disconnect-drive').hidden=!connected();$('home-connect-drive').hidden=connected();$('home-sync-drive').hidden=!connected();$('drive-status').textContent=connected()?'Google Drive connected for this session.':clientId?'Ready to connect to Google Drive.':'Google Drive needs one-time setup. Open Settings & install to add your client ID.';}
+$('connect-drive').onclick=$('home-connect-drive').onclick=async()=>{try{if(!clientId){$('backup-dialog').close();$('client-id').value='';show('settings-dialog');return;}if(!globalThis.google?.accounts?.oauth2){await prepareGoogle();toast('Google sign-in is ready. Press Connect Google Drive again.');return;}await authorize(clientId);updateDrive();scheduleDriveKeepAlive();if(autoSyncDrive)await runDriveSync({quiet:true});toast('Drive connected. Press Sync now to merge and back up.');}catch(e){report(e);}};
 $('disconnect-drive').onclick=()=>{clearTimeout(keepAliveTimer);clearTimeout(autoSyncTimer);disconnect();updateDrive();toast('Google Drive disconnected.');};
-$('sync-drive').onclick=()=>runDriveSync({quiet:false});
+$('sync-drive').onclick=$('home-sync-drive').onclick=()=>runDriveSync({quiet:false});
 $('export').onclick=()=>{const blob=new Blob([backup(events)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`arcana-vault-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);$('backup-status').textContent='Backup download started. Keep the file somewhere safe.';};
 $('import').onclick=()=>$('import-file').click();$('empty-import').onclick=()=>{show('backup-dialog');$('import-file').click();};
 $('import-file').onchange=async()=>{try{const file=$('import-file').files[0];if(!file)return;if(file.size>30_000_000)throw Error('Choose a backup smaller than 30 MB.');const incoming=parseBackup(await file.text());const merged=mergeEvents(events,incoming);const added=merged.length-events.length;if(!added){toast('This backup is already in your collection.');return;}if(!await confirmAction(`Merge ${added} new revisions from this backup? Existing independent edits will be preserved for review.`))return;await commit(incoming);$('backup-status').textContent=`Merged ${added} revisions. Review any conflicting edits below.`;toast('Backup imported.');}catch(e){report(e);}finally{$('import-file').value='';}};
@@ -497,4 +497,4 @@ const splashEl=$('mobile-splash');
 if(splashEl){if(matchMedia('(pointer: coarse)').matches||innerWidth<=900){setTimeout(()=>{splashEl.classList.add('is-done');setTimeout(()=>splashEl.remove(),160);},500);}else splashEl.remove();}
 loadMtgNews();
 preloadCardCatalog();
-try{db=await openDB();events=mergeEvents(await read());render();network();if(clientId){if(autoConnectDrive)connectDriveOnLoad();else prepareGoogle().catch(()=>{});}if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>{console.error(e);toast('Offline setup failed. Keep the local server running and reload.');});}catch(e){$('add-button').disabled=true;$('first-card').disabled=true;report(Error('Local storage could not open. Enable browser site storage and reload before adding cards.'));}
+try{db=await openDB();events=mergeEvents(await read());render();updateDrive();network();if(clientId){if(autoConnectDrive)connectDriveOnLoad();else prepareGoogle().catch(()=>{});}if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>{console.error(e);toast('Offline setup failed. Keep the local server running and reload.');});}catch(e){$('add-button').disabled=true;$('first-card').disabled=true;report(Error('Local storage could not open. Enable browser site storage and reload before adding cards.'));}
