@@ -6,12 +6,13 @@ function loadGoogle(){
  if(!loading)loading=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=resolve;s.onerror=()=>{loading=null;s.remove();reject(Error('Google sign-in could not load. Check your connection.'));};document.head.append(s);});return loading;
 }
 export async function prepareGoogle(){await loadGoogle();}
-export function authorize(clientId){return new Promise((resolve,reject)=>{
+export function authorize(clientId,{silent=false}={}){return new Promise((resolve,reject)=>{
  if(!clientId.endsWith('.apps.googleusercontent.com'))return reject(Error('Enter your Google OAuth web client ID in Settings first.'));
  if(!globalThis.google?.accounts?.oauth2)return reject(Error('Google sign-in is loading. Try again in a moment.'));
- google.accounts.oauth2.initTokenClient({client_id:clientId,scope,callback:r=>{if(r.error)return reject(Error(r.error_description||r.error));if(!google.accounts.oauth2.hasGrantedAllScopes(r,scope))return reject(Error('Drive file permission is needed to sync.'));token=r.access_token;expires=Date.now()+Number(r.expires_in)*1000;resolve();},error_callback:()=>reject(Error('Google sign-in was closed or blocked. Try again.'))}).requestAccessToken({prompt:''});
+ google.accounts.oauth2.initTokenClient({client_id:clientId,scope,callback:r=>{if(r.error)return reject(Error(r.error_description||r.error));if(!google.accounts.oauth2.hasGrantedAllScopes(r,scope))return reject(Error('Drive file permission is needed to sync.'));token=r.access_token;expires=Date.now()+Number(r.expires_in)*1000;resolve();},error_callback:()=>reject(Error(silent?'Silent Google sign-in unavailable.':'Google sign-in was closed or blocked. Try again.'))}).requestAccessToken({prompt:silent?'none':''});
 });}
 export function connected(){return !!token&&Date.now()<expires-60000;}
+export function tokenExpiresAt(){return expires;}
 export function disconnect(){if(token&&globalThis.google)google.accounts.oauth2.revoke(token,()=>{});token='';expires=0;}
 async function request(url,options={}){if(!connected())throw Error('Connect Google Drive again; your session has expired.');const r=await fetch(url,{...options,headers:{...options.headers,Authorization:`Bearer ${token}`}});if(!r.ok){if(r.status===401){token='';throw Error('Google session expired. Connect again.');}throw Error(`Google Drive request failed (${r.status}). Your local collection is safe.`);}return r;}
 async function list(q){let files=[],page;do{const p=new URLSearchParams({q,fields:'nextPageToken,files(id,name,mimeType)',pageSize:'1000'});if(page)p.set('pageToken',page);const data=await(await request(`https://www.googleapis.com/drive/v3/files?${p}`)).json();files.push(...data.files);page=data.nextPageToken;}while(page);return files;}

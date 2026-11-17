@@ -1,5 +1,5 @@
 import {records,mergeEvents,parseBackup,backup,cardFromScryfall,scryfallImageUrl as imageUrl,artUrlFromCard as artUrl,allowsMultipleCopies,cardTypeGroup,cardFitsDeck,validCommanderPair,validateCommanderDeck,suggestDeckPlaystyle,shoppingCsv,sumCardValues,groupCollectionEntries} from './core.js';
-import {prepareGoogle,authorize,connected,disconnect,syncDrive} from './drive.js';
+import {prepareGoogle,authorize,connected,disconnect,syncDrive,tokenExpiresAt} from './drive.js';
 import {priceCards} from './prices.js';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -8,7 +8,7 @@ let activeDeck='',selectedDeck='',deckSearch='',deckSearchOpen=false,deckSort='d
 const deckCtasKey=()=>matchMedia('(pointer: coarse)').matches||innerWidth<=900?'arcana-hide-deck-ctas-mobile':'arcana-hide-deck-ctas-desktop';
 const isDeckCtasVisible=()=>localStorage.getItem(deckCtasKey())!=='true';
 const DEFAULT_CLIENT_ID='713228552059-d3nb08komhcf7o4vtvsd2oma8g03ooch.apps.googleusercontent.com';
-let clientId=localStorage.getItem('arcana-client-id')||DEFAULT_CLIENT_ID,geminiApiKey=localStorage.getItem('arcana-gemini-key')||'',lastOnlineGuide='',lookedUpCard=null;
+let clientId=localStorage.getItem('arcana-client-id')||DEFAULT_CLIENT_ID,geminiApiKey=localStorage.getItem('arcana-gemini-key')||'',autoConnectDrive=localStorage.getItem('arcana-auto-connect')==='true',autoSyncDrive=localStorage.getItem('arcana-auto-sync')==='true',lastOnlineGuide='',lookedUpCard=null,autoSyncTimer,keepAliveTimer;
 async function confirmAction(message){
  const modal=$('confirm-dialog');$('confirm-message').textContent=message;
  return new Promise(resolve=>{modal.addEventListener('close',()=>resolve(modal.returnValue==='yes'),{once:true});modal.showModal();});
@@ -19,10 +19,10 @@ function show(id){$(id).showModal();}
 function report(e){console.error(e);toast(e.message||'Something went wrong. Please try again.');}
 async function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open('arcana-vault',1);req.onupgradeneeded=()=>req.result.createObjectStore('state');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result);req.onblocked=()=>toast('Close other Arcana Vault tabs, then reload.');});}
 async function read(){return new Promise((resolve,reject)=>{const tx=db.transaction('state');const req=tx.objectStore('state').get('events');req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error);});}
-async function commit(incoming){return new Promise((resolve,reject)=>{
+async function commit(incoming,{fromSync=false}={}){return new Promise((resolve,reject)=>{
  const tx=db.transaction('state','readwrite'),store=tx.objectStore('state');let merged;const req=store.get('events');
  req.onsuccess=()=>{try{merged=mergeEvents(req.result||[],incoming);store.put(merged,'events');}catch(e){tx.abort();reject(e);}};
- tx.oncomplete=()=>{events=merged;render();channel?.postMessage('changed');resolve();};
+ tx.oncomplete=()=>{events=merged;render();channel?.postMessage('changed');if(!fromSync)scheduleAutoSync();resolve();};
  tx.onerror=()=>reject(tx.error||Error('Unable to save. Download a backup and check available storage.'));
  tx.onabort=()=>reject(tx.error||Error('Save failed. Your previous collection is unchanged.'));
 });}
@@ -409,19 +409,54 @@ $('card-form').oninput=e=>{if(e.target.id==='quantity'){renderDeckAssignments({.
 $('card-form').onsubmit=async e=>{e.preventDefault();const button=$('save-card');button.disabled=true;try{const value=formValue(),assigned=Object.values(value.deckCounts).reduce((a,b)=>a+b,0);if(assigned>value.quantity)throw Error(`You have assigned ${assigned} copies to decks, but own only ${value.quantity}.`);await commit([revision(value)]);$('edit-dialog').close();toast('Card saved on this device.');navigator.storage?.persist?.().catch(()=>{});}catch(e){report(e);}finally{button.disabled=false;}};
 $('delete-card').onclick=async()=>{if(!await confirmAction(`Delete this entry for ${draft.name}? This deletion will be included in your next sync.`))return;try{await commit([revision(null)]);$('edit-dialog').close();toast('Entry deleted.');}catch(e){report(e);}};
 $('validate-card').onclick=()=>{const ctx={value:formValue(),id:editing,heads};$('edit-dialog').close();openLookup(ctx);};
-$('home-backup').onclick=()=>{updateDrive();show('backup-dialog');};$('home-settings').onclick=()=>{$('client-id').value=clientId;$('gemini-api-key').value=geminiApiKey;show('settings-dialog');};
-$('save-settings').onclick=()=>{clientId=$('client-id').value.trim();geminiApiKey=$('gemini-api-key').value.trim();if(clientId&&!/^[\w.-]+\.apps\.googleusercontent\.com$/.test(clientId)){toast('Enter a valid Google OAuth web client ID.');return;}disconnect();localStorage.setItem('arcana-client-id',clientId);localStorage.setItem('arcana-gemini-key',geminiApiKey);updateDrive();if(clientId)prepareGoogle().catch(()=>{});toast('Settings saved.');};
+$('home-backup').onclick=()=>{updateDrive();show('backup-dialog');};$('home-settings').onclick=()=>{$('client-id').value=clientId;$('gemini-api-key').value=geminiApiKey;$('drive-auto-connect').checked=autoConnectDrive;$('drive-auto-sync').checked=autoSyncDrive;show('settings-dialog');};
+$('save-settings').onclick=()=>{clientId=$('client-id').value.trim();geminiApiKey=$('gemini-api-key').value.trim();autoConnectDrive=$('drive-auto-connect').checked;autoSyncDrive=$('drive-auto-sync').checked;if(clientId&&!/^[\w.-]+\.apps\.googleusercontent\.com$/.test(clientId)){toast('Enter a valid Google OAuth web client ID.');return;}disconnect();clearTimeout(keepAliveTimer);localStorage.setItem('arcana-client-id',clientId);localStorage.setItem('arcana-gemini-key',geminiApiKey);localStorage.setItem('arcana-auto-connect',String(autoConnectDrive));localStorage.setItem('arcana-auto-sync',String(autoSyncDrive));updateDrive();if(clientId)prepareGoogle().then(()=>{if(autoConnectDrive)return connectDriveOnLoad();}).catch(()=>{});toast('Settings saved.');};
+function scheduleDriveKeepAlive(){
+ clearTimeout(keepAliveTimer);
+ if(!autoConnectDrive||!connected())return;
+ const delay=Math.max(60000,(tokenExpiresAt()-Date.now())-120000);
+ keepAliveTimer=setTimeout(async()=>{
+  if(!autoConnectDrive||!clientId||!navigator.onLine)return;
+  try{await authorize(clientId,{silent:true});updateDrive();scheduleDriveKeepAlive();}catch{}
+ },delay);
+}
+async function connectDriveOnLoad(){
+ if(!autoConnectDrive||!clientId||!navigator.onLine)return;
+ try{
+  await prepareGoogle();
+  await authorize(clientId,{silent:true});
+  updateDrive();scheduleDriveKeepAlive();
+  if(autoSyncDrive)await runDriveSync({quiet:true});
+ }catch{}
+}
+function scheduleAutoSync(){
+ if(!autoSyncDrive||!connected()||!navigator.onLine)return;
+ clearTimeout(autoSyncTimer);
+ autoSyncTimer=setTimeout(()=>runDriveSync({quiet:true}),2500);
+}
+async function runDriveSync({quiet=false}={}){
+ if(driveBusy||!connected())return;
+ driveBusy=true;$('sync-drive').disabled=true;$('disconnect-drive').disabled=true;$('drive-status').textContent='Merging snapshots and saving a dated backup…';
+ try{
+  const merged=await syncDrive(events);
+  await commit(merged,{fromSync:true});
+  localStorage.setItem('arcana-last-sync',new Date().toISOString());
+  render();
+  if(!quiet)toast('Drive sync complete. A dated backup was saved.');
+ }catch(e){if(!quiet)report(e);else console.info('Auto sync skipped:',e);}
+ finally{driveBusy=false;$('sync-drive').disabled=false;$('disconnect-drive').disabled=false;updateDrive();}
+}
 function updateDrive(){$('connect-drive').hidden=connected();$('sync-drive').hidden=!connected();$('disconnect-drive').hidden=!connected();$('drive-status').textContent=connected()?'Google Drive connected for this session.':clientId?'Ready to connect to Google Drive.':'Google Drive needs one-time setup. Open Settings & install to add your client ID.';}
-$('connect-drive').onclick=async()=>{try{if(!clientId){$('backup-dialog').close();$('client-id').value='';show('settings-dialog');return;}if(!globalThis.google?.accounts?.oauth2){await prepareGoogle();toast('Google sign-in is ready. Press Connect Google Drive again.');return;}await authorize(clientId);updateDrive();toast('Drive connected. Press Sync now to merge and back up.');}catch(e){report(e);}};
-$('disconnect-drive').onclick=()=>{disconnect();updateDrive();toast('Google Drive disconnected.');};
-$('sync-drive').onclick=async()=>{if(driveBusy)return;driveBusy=true;$('sync-drive').disabled=true;$('disconnect-drive').disabled=true;$('drive-status').textContent='Merging snapshots and saving a dated backup…';try{const merged=await syncDrive(events);await commit(merged);localStorage.setItem('arcana-last-sync',new Date().toISOString());render();toast('Drive sync complete. A dated backup was saved.');}catch(e){report(e);}finally{driveBusy=false;$('sync-drive').disabled=false;$('disconnect-drive').disabled=false;updateDrive();}};
+$('connect-drive').onclick=async()=>{try{if(!clientId){$('backup-dialog').close();$('client-id').value='';show('settings-dialog');return;}if(!globalThis.google?.accounts?.oauth2){await prepareGoogle();toast('Google sign-in is ready. Press Connect Google Drive again.');return;}await authorize(clientId);updateDrive();scheduleDriveKeepAlive();if(autoSyncDrive)await runDriveSync({quiet:true});toast('Drive connected. Press Sync now to merge and back up.');}catch(e){report(e);}};
+$('disconnect-drive').onclick=()=>{clearTimeout(keepAliveTimer);clearTimeout(autoSyncTimer);disconnect();updateDrive();toast('Google Drive disconnected.');};
+$('sync-drive').onclick=()=>runDriveSync({quiet:false});
 $('export').onclick=()=>{const blob=new Blob([backup(events)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`arcana-vault-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);$('backup-status').textContent='Backup download started. Keep the file somewhere safe.';};
 $('import').onclick=()=>$('import-file').click();$('empty-import').onclick=()=>{show('backup-dialog');$('import-file').click();};
 $('import-file').onchange=async()=>{try{const file=$('import-file').files[0];if(!file)return;if(file.size>30_000_000)throw Error('Choose a backup smaller than 30 MB.');const incoming=parseBackup(await file.text());const merged=mergeEvents(events,incoming);const added=merged.length-events.length;if(!added){toast('This backup is already in your collection.');return;}if(!await confirmAction(`Merge ${added} new revisions from this backup? Existing independent edits will be preserved for review.`))return;await commit(incoming);$('backup-status').textContent=`Merged ${added} revisions. Review any conflicting edits below.`;toast('Backup imported.');}catch(e){report(e);}finally{$('import-file').value='';}};
 $('conflicts').onclick=async e=>{const b=e.target.closest('[data-resolve]');if(!b)return;try{const r=records(events).find(r=>r.id===b.dataset.resolve);if(!r||!r.conflict)return;const chosen=r.heads[Number(b.dataset.index)];if(!await confirmAction('Keep this version and resolve the other versions of this entry?'))return;await commit([{id:crypto.randomUUID(),recordId:r.id,parents:r.heads.map(h=>h.id),at:new Date().toISOString(),value:chosen.value}]);toast('Conflict resolved. Sync to share your choice.');}catch(e){report(e);}};
 $('persist').onclick=async()=>{try{const granted=await navigator.storage?.persist?.();$('persist-status').textContent=granted?'Persistent storage granted. Keep backups as well.':'Your browser did not grant persistent storage. Regular backups are recommended.';}catch(e){report(e);}};
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('install').hidden=false;});$('install').onclick=async()=>{if(!installPrompt)return;await installPrompt.prompt();installPrompt=null;$('install').hidden=true;};
-function network(){$('network-status').textContent=navigator.onLine?'Local-first storage':'Offline · collection available';}window.addEventListener('online',network);window.addEventListener('offline',network);
+function network(){$('network-status').textContent=navigator.onLine?'Local-first storage':'Offline · collection available';if(navigator.onLine&&autoConnectDrive&&!connected())connectDriveOnLoad();else if(navigator.onLine&&autoSyncDrive&&connected())scheduleAutoSync();}window.addEventListener('online',network);window.addEventListener('offline',network);
 if(matchMedia('(pointer: coarse)').matches||innerWidth<=900){
  let leavingApp=false,exitPromptOpen=false;
  if(!history.state?.manaHordeGuard)history.pushState({manaHordeGuard:true},'');
@@ -448,4 +483,4 @@ async function loadMtgNews(){
 }if(channel)channel.onmessage=async()=>{try{events=await read();render();}catch(e){report(e);}};
 loadMtgNews();
 preloadCardCatalog();
-try{db=await openDB();events=mergeEvents(await read());render();network();if(clientId)prepareGoogle().catch(()=>{});if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>{console.error(e);toast('Offline setup failed. Keep the local server running and reload.');});}catch(e){$('save-status').textContent='Storage unavailable';$('add-button').disabled=true;$('first-card').disabled=true;report(Error('Local storage could not open. Enable browser site storage and reload before adding cards.'));}
+try{db=await openDB();events=mergeEvents(await read());render();network();if(clientId){if(autoConnectDrive)connectDriveOnLoad();else prepareGoogle().catch(()=>{});}if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>{console.error(e);toast('Offline setup failed. Keep the local server running and reload.');});}catch(e){$('save-status').textContent='Storage unavailable';$('add-button').disabled=true;$('first-card').disabled=true;report(Error('Local storage could not open. Enable browser site storage and reload before adding cards.'));}
