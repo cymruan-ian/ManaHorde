@@ -370,6 +370,21 @@ $('conflicts').onclick=async e=>{const b=e.target.closest('[data-resolve]');if(!
 $('persist').onclick=async()=>{try{const granted=await navigator.storage?.persist?.();$('persist-status').textContent=granted?'Persistent storage granted. Keep backups as well.':'Your browser did not grant persistent storage. Regular backups are recommended.';}catch(e){report(e);}};
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('install').hidden=false;});$('install').onclick=async()=>{if(!installPrompt)return;await installPrompt.prompt();installPrompt=null;$('install').hidden=true;};
 function network(){$('network-status').textContent=navigator.onLine?'Local-first storage':'Offline · collection available';}window.addEventListener('online',network);window.addEventListener('offline',network);
+if(matchMedia('(pointer: coarse)').matches||innerWidth<=900){
+ let leavingApp=false,exitPromptOpen=false;
+ if(!history.state?.manaHordeGuard)history.pushState({manaHordeGuard:true},'');
+ window.addEventListener('popstate',async()=>{
+  if(leavingApp)return;
+  const openDialog=document.querySelector('dialog[open]');
+  if(openDialog){if(openDialog.id!=='confirm-dialog')openDialog.close();history.pushState({manaHordeGuard:true},'');return;}
+  if(exitPromptOpen){history.pushState({manaHordeGuard:true},'');return;}
+  exitPromptOpen=true;
+  const leave=await confirmAction('Are you sure you want to leave ManaHorde?');
+  exitPromptOpen=false;
+  if(leave){leavingApp=true;history.back();}
+  else history.pushState({manaHordeGuard:true},'');
+ });
+}
 async function loadMtgNews(){
  const target='https://magic.wizards.com/en/news',container=$('mtg-news'),sources=['./api/mtg-news',`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`];
  for(const source of sources){try{
