@@ -215,16 +215,21 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 @media(horizontal-viewport-segments:2){
  .collection-deck-ctas,.mtg-news,.stats{column-gap:calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0) + 16px)}
 }
-#cards.cards,#deck-page .deck-card-grid{grid-template-columns:repeat(var(--collection-cols,3),minmax(0,1fr));gap:clamp(4px,calc(24px / var(--collection-cols,3)),12px)}
+#cards.cards,#deck-page .deck-card-grid{grid-template-columns:repeat(var(--collection-cols,3),minmax(0,1fr));gap:clamp(4px,calc(24px / var(--collection-cols,3)),12px);align-items:start}
 #cards.cards .card,#deck-page .deck-card-grid .deck-display-card{min-width:0}
 #cards.cards .card{cursor:pointer}
+#cards.cards .card-info{padding:10px;display:flex;flex-direction:column;gap:6px;text-align:left}
+#cards.cards .card-info p{margin:0;font-size:11px;line-height:1.35}
+#cards.cards .card-info .card-meta{margin:2px 0 0;display:flex;align-items:center;justify-content:space-between;gap:6px}
+#cards.cards .card-info .deck-tags{margin-top:2px;gap:4px}
+#cards.cards .card-info .price-line{margin-top:2px;padding-top:7px}
 .collection-heading-actions{display:flex;align-items:center;gap:10px}
 .display-cols-popover{position:fixed;top:58px;right:12px;z-index:30;width:min(240px,82vw);padding:12px 14px;border:1px solid #dfd6c3;border-radius:14px;background:#fffdf8;color:#27302c;box-shadow:0 12px 32px rgba(23,39,31,.2)}
 .display-cols-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
 .display-cols-head output{color:#176b53;font-weight:800}
 .display-cols-popover input[type=range]{width:100%;margin:0;accent-color:#176b53}
 .display-cols-scale{display:flex;justify-content:space-between;font-size:10px;color:#758078;margin-top:4px;padding:0 2px}
-.collection-card-title{margin:6px 5px 5px;padding:0;font-size:clamp(9px,calc(60px / var(--collection-cols,3)),13px);line-height:1.2;text-align:center;color:#27302c;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+.collection-card-title{margin:6px 5px 5px;padding:0;min-height:2.4em;font-size:clamp(9px,calc(60px / var(--collection-cols,3)),13px);line-height:1.2;text-align:center;color:#27302c;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
 .card-expand-btn{display:flex;align-items:center;justify-content:center;width:100%;height:28px;padding:0;border:0;border-top:1px solid #e4dccd;background:#f8f5ed;color:#35413c;font-size:16px;line-height:1;cursor:pointer;transition:background .15s,color .15s}
 .card-expand-btn span{display:inline-block;transition:transform .2s}
 .card-expand-btn:hover{background:#eae2d2;color:#176b53}
