@@ -18,6 +18,8 @@ test('index.html has home action labels, deck toggles, type sort, suggestions, s
  assert.match(html,/id="commander-guide-dialog"/);
  assert.match(html,/id="gemini-api-key"/);
  assert.match(html,/id="mobile-bottom-nav"/);
+ assert.match(html,/id="home-lookup-card"/);
+ assert.match(html,/id="card-lookup-dialog"/);
  assert.doesNotMatch(html,/class="breadcrumb"/);
 });
 

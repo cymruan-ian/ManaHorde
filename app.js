@@ -6,7 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let db,events=[],editing=null,draft=null,heads=[],assignmentDraft={},results=[],nextPage=null,searchBusy=false,driveBusy=false,toastTimer,installPrompt,currentPage='home',cardCatalog=[],cardPrices=new Map(),lastPriceKey='';
 let activeDeck='',selectedDeck='',deckSearch='',deckSearchOpen=false,deckSort='default',deckSimpleView=false,showCollectionDecks=localStorage.getItem('arcana-hide-deck-ctas')!=='true',hydrationRunning=false,pendingCommanderAnim=null;const hydrationTried=new Set();
 const DEFAULT_CLIENT_ID='713228552059-d3nb08komhcf7o4vtvsd2oma8g03ooch.apps.googleusercontent.com';
-let clientId=localStorage.getItem('arcana-client-id')||DEFAULT_CLIENT_ID,geminiApiKey=localStorage.getItem('arcana-gemini-key')||'',lastOnlineGuide='';
+let clientId=localStorage.getItem('arcana-client-id')||DEFAULT_CLIENT_ID,geminiApiKey=localStorage.getItem('arcana-gemini-key')||'',lastOnlineGuide='',lookedUpCard=null;
 async function confirmAction(message){
  const modal=$('confirm-dialog');$('confirm-message').textContent=message;
  return new Promise(resolve=>{modal.addEventListener('close',()=>resolve(modal.returnValue==='yes'),{once:true});modal.showModal();});
@@ -198,15 +198,50 @@ function edit(value,id=null,currentHeads=[],carry=null){
 function formValue(){const deckCounts=Object.fromEntries(Object.entries(assignmentDraft).filter(([,n])=>Number(n)>0).map(([id,n])=>[id,Number(n)]));return {...draft,name:$('card-name').value.trim(),quantity:Number($('quantity').value),finish:$('finish').value,condition:$('condition').value,language:$('language').value.trim(),location:$('location').value.trim(),notes:$('notes').value.trim(),deckCounts};}
 let lookupContext=null;
 function openLookup(context=null){lookupContext=context;$('lookup').value=context?.value?.name||'';$('lookup-suggestions').innerHTML='';$('lookup-suggestions').hidden=true;$('lookup-status').textContent='';$('search-results').innerHTML='';$('more-results').hidden=true;show('add-dialog');$('lookup').focus();}
-function renderLookupSuggestions(){
- const box=$('lookup-suggestions'),q=$('lookup').value.trim().toLowerCase();
- if(!cardCatalog.length||q.length<2||/^[a-z0-9]{2,8}\s+\d+[a-z★]*$/i.test(q)){box.hidden=true;box.innerHTML='';return;}
+function filterCatalogMatches(q){
+ const lowerQ=q.trim().toLowerCase();
+ if(!cardCatalog.length||lowerQ.length<2||/^[a-z0-9]{2,8}\s+\d+[a-z★]*$/i.test(lowerQ))return [];
  const prefix=[],contains=[];
- for(const name of cardCatalog){const lower=name.toLowerCase();if(lower.startsWith(q))prefix.push(name);else if(lower.includes(q)&&contains.length<8)contains.push(name);if(prefix.length>=8)break;}
- const hits=[...prefix,...contains].slice(0,8);
+ for(const name of cardCatalog){const lower=name.toLowerCase();if(lower.startsWith(lowerQ))prefix.push(name);else if(lower.includes(lowerQ)&&contains.length<8)contains.push(name);if(prefix.length>=8)break;}
+ return [...prefix,...contains].slice(0,8);
+}
+function renderLookupSuggestions(){
+ const box=$('lookup-suggestions'),hits=filterCatalogMatches($('lookup').value);
  if(!hits.length){box.hidden=true;box.innerHTML='';return;}
  box.innerHTML=hits.map(name=>`<button type="button" class="lookup-suggestion" role="option" data-suggest="${esc(name)}">${esc(name)}</button>`).join('');
  box.hidden=false;
+}
+function openCardLookup(){
+ lookedUpCard=null;
+ $('card-lookup-input').value='';
+ $('card-lookup-suggestions').innerHTML='';$('card-lookup-suggestions').hidden=true;
+ $('card-lookup-status').textContent='';
+ $('card-lookup-result').innerHTML='';$('card-lookup-result').hidden=true;
+ show('card-lookup-dialog');$('card-lookup-input').focus();
+}
+async function runCardLookup(nameOverride=null){
+ const q=(nameOverride??$('card-lookup-input').value).trim();if(!q)return;
+ $('card-lookup-suggestions').hidden=true;
+ $('card-lookup-status').textContent='Looking up original printing on Scryfall…';
+ $('card-lookup-result').hidden=true;$('card-lookup-submit').disabled=true;
+ try{
+  const query=`game:paper ${nameOverride?`!"${q.replace(/["\\]/g,'')}"`:`name:"${q.replace(/["\\]/g,'')}"`}`;
+  const r=await fetch(`https://api.scryfall.com/cards/search?${new URLSearchParams({q:query,unique:'prints',order:'released',dir:'asc'})}`,{headers:{Accept:'application/json'}});
+  const data=await r.json();if(!r.ok||!data.data?.length)throw Error(r.status===404?'Card not found on Scryfall.':data.details||'Card lookup failed.');
+  const raw=data.data[0],card=cardFromScryfall(raw);
+  lookedUpCard={raw,card};
+  let rulings=[];
+  if(raw.rulings_uri?.startsWith('https://api.scryfall.com/')){
+   try{const rr=await fetch(raw.rulings_uri,{headers:{Accept:'application/json'}});if(rr.ok){const rd=await rr.json();rulings=rd.data||[];}}catch{}
+  }
+  const ownedCount=records(events).filter(row=>row.value&&row.value.kind!=='deck'&&!row.conflict&&!row.value.notOwned&&sameCard(row.value,card)).reduce((sum,row)=>sum+(Number(row.value.quantity)||0),0);
+  const img=imageUrl(card.image),formats=['standard','pioneer','modern','legacy','vintage','commander','pauper','brawl','historic','alchemy'];
+  const legalitiesHtml=formats.map(f=>{const status=card.legalities?.[f]||'not_legal',label=status==='legal'?'Legal':status==='banned'?'Banned':status==='restricted'?'Restricted':'Not legal';return `<div class="legality-pill legality-${esc(status)}"><span>${esc(f)}</span><strong>${esc(label)}</strong></div>`;}).join('');
+  const rulingsHtml=rulings.length?`<ul class="card-rulings-list">${rulings.map(ru=>`<li><time>${esc(ru.published_at)}</time><p>${esc(ru.comment)}</p></li>`).join('')}</ul>`:'<p class="muted">No official rulings on Scryfall.</p>';
+  $('card-lookup-status').textContent=`Original printing: ${card.setName} (${card.set.toUpperCase()} #${card.number})`;
+  $('card-lookup-result').innerHTML=`<div class="card-lookup-hero"><div class="card-lookup-art">${img?`<img src="${esc(img)}" alt="${esc(card.name)}">`:placeholder(card.name)}</div><div class="card-lookup-summary"><h3>${esc(card.name)}</h3><p class="card-lookup-owned">${ownedCount?`In your collection: <strong>× ${ownedCount}</strong> (across all printings)`:'Not in your collection yet'}</p><div class="button-row"><button type="button" class="button primary" id="lookup-add-collection">Add to Collection</button><button type="button" class="button subtle" id="lookup-add-shopping">Add to Shopping list</button></div>${card.text?`<p class="card-lookup-oracle">${esc(card.type)}\n\n${esc(card.text)}</p>`:''}</div></div><section class="card-lookup-section"><h4>Format legality</h4><div class="legality-grid">${legalitiesHtml}</div></section><section class="card-lookup-section"><h4>Rulings</h4>${rulingsHtml}</section>`;
+  $('card-lookup-result').hidden=false;
+ }catch(e){$('card-lookup-status').textContent=navigator.onLine?e.message:'You are offline. Card lookup requires an internet connection.';}finally{$('card-lookup-submit').disabled=false;}
 }
 async function preloadCardCatalog(){
  const url='https://api.scryfall.com/catalog/card-names';
@@ -229,7 +264,15 @@ async function searchCards(url=null){
 document.querySelectorAll('.close').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
 for(const id of ['add-button','first-card','add-nav'])$(id).onclick=()=>openLookup();
 $('mobile-bottom-nav').onclick=e=>{const b=e.target.closest('[data-mobile-nav]');if(b)$(b.dataset.mobileNav)?.click();};
-$('home-nav').onclick=()=>{currentPage='home';selectedDeck='';$('decks-submenu').hidden=true;$('decks-nav').setAttribute('aria-expanded','false');render();window.scrollTo({top:0,behavior:'smooth'});};$('home-open-collection').onclick=()=>$('collection-nav').click();
+$('home-nav').onclick=()=>{currentPage='home';selectedDeck='';$('decks-submenu').hidden=true;$('decks-nav').setAttribute('aria-expanded','false');render();window.scrollTo({top:0,behavior:'smooth'});};$('home-open-collection').onclick=()=>$('collection-nav').click();$('home-lookup-card').onclick=openCardLookup;
+$('card-lookup-input').oninput=()=>{const box=$('card-lookup-suggestions'),hits=filterCatalogMatches($('card-lookup-input').value);if(!hits.length){box.hidden=true;box.innerHTML='';return;}box.innerHTML=hits.map(name=>`<button type="button" class="lookup-suggestion" role="option" data-lookup-suggest="${esc(name)}">${esc(name)}</button>`).join('');box.hidden=false;};
+$('card-lookup-suggestions').onclick=e=>{const b=e.target.closest('[data-lookup-suggest]');if(!b)return;$('card-lookup-input').value=b.dataset.lookupSuggest;runCardLookup(b.dataset.lookupSuggest);};
+$('card-lookup-form').onsubmit=e=>{e.preventDefault();runCardLookup();};
+$('card-lookup-result').onclick=async e=>{
+ if(!lookedUpCard)return;
+ if(e.target.closest('#lookup-add-collection')){const {card,raw}=lookedUpCard;$('card-lookup-dialog').close();edit(card);const options=$('finish').options;for(const o of options)o.disabled=!raw.finishes.includes(o.value);return;}
+ if(e.target.closest('#lookup-add-shopping')){const {card}=lookedUpCard;try{await commit([{id:crypto.randomUUID(),recordId:crypto.randomUUID(),parents:[],at:new Date().toISOString(),value:{...card,quantity:1,notOwned:true,location:'Not owned',deckCounts:{}}}]);$('card-lookup-dialog').close();toast(`${card.name} added to Shopping list as Not Owned.`);}catch(err){report(err);}}
+};
 $('open-information').onclick=()=>{currentPage='information';selectedDeck='';render();window.scrollTo({top:0,behavior:'smooth'});};$('information-home').onclick=()=>$('home-nav').click();
 $('shopping-nav').onclick=()=>{currentPage='shopping';selectedDeck='';render();window.scrollTo({top:0,behavior:'smooth'});};$('export-shopping').onclick=exportShoppingList;
 $('shopping-cards').onclick=e=>{const b=e.target.closest('[data-shopping-deck]');if(!b)return;selectedDeck=b.dataset.shoppingDeck;currentPage='deck';deckSearch='';deckSearchOpen=false;render();window.scrollTo({top:0,behavior:'smooth'});};
