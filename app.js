@@ -20,11 +20,14 @@ function report(e){console.error(e);toast(e.message||'Something went wrong. Plea
 async function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open('arcana-vault',1);req.onupgradeneeded=()=>req.result.createObjectStore('state');req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result);req.onblocked=()=>toast('Close other Arcana Vault tabs, then reload.');});}
 async function read(){return new Promise((resolve,reject)=>{const tx=db.transaction('state');const req=tx.objectStore('state').get('events');req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error);});}
 async function commit(incoming,{fromSync=false}={}){return new Promise((resolve,reject)=>{
+ let settled=false;const done=(fn,val)=>{if(settled)return;settled=true;clearTimeout(timer);fn(val);};
+ const timer=setTimeout(()=>done(reject,Error('Local database save timed out. Close other tabs and try again.')),15000);
  const tx=db.transaction('state','readwrite'),store=tx.objectStore('state');let merged;const req=store.get('events');
- req.onsuccess=()=>{try{merged=mergeEvents(req.result||[],incoming);store.put(merged,'events');}catch(e){tx.abort();reject(e);}};
- tx.oncomplete=()=>{events=merged;render();channel?.postMessage('changed');if(!fromSync)scheduleAutoSync();resolve();};
- tx.onerror=()=>reject(tx.error||Error('Unable to save. Download a backup and check available storage.'));
- tx.onabort=()=>reject(tx.error||Error('Save failed. Your previous collection is unchanged.'));
+ req.onsuccess=()=>{try{const current=req.result||[];merged=fromSync&&current.length===events.length?incoming:mergeEvents(current,incoming);const putReq=store.put(merged,'events');putReq.onerror=()=>{try{tx.abort();}catch{}done(reject,putReq.error||Error('Unable to write to local storage.'));};}catch(e){try{tx.abort();}catch{}done(reject,e);}};
+ req.onerror=()=>done(reject,req.error||Error('Unable to read local storage.'));
+ tx.oncomplete=()=>{events=merged;done(resolve);try{render();}catch(e){console.error('Render after commit failed:',e);}channel?.postMessage('changed');if(!fromSync)scheduleAutoSync();};
+ tx.onerror=()=>done(reject,tx.error||Error('Unable to save. Download a backup and check available storage.'));
+ tx.onabort=()=>done(reject,tx.error||Error('Save failed. Your previous collection is unchanged.'));
 });}
 function revision(value,kind='card'){return {id:crypto.randomUUID(),recordId:editing||crypto.randomUUID(),parents:heads.map(h=>h.id),at:new Date().toISOString(),value,...(kind==='deck'?{kind:'deck'}:{})};}
 function placeholder(name){return `<div class="card-placeholder"><span>◇</span>${esc(name)}</div>`;}
