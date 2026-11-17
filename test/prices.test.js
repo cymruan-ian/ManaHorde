@@ -56,3 +56,27 @@ test('priceCards rejects on failure and retries on subsequent call',async()=>{
   globalThis.fetch=originalFetch;
  }
 });
+test('priceCards falls back to Scryfall collection EUR prices when guide is blocked by CORS',async()=>{
+ const originalFetch=globalThis.fetch;
+ globalThis.fetch=async(url)=>{
+  const u=String(url);
+  if(u==='./api/price-guide')return new Response('Not found',{status:404});
+  if(u.includes('price_guide_1.json'))throw new TypeError('Failed to fetch');
+  if(u.includes('frankfurter.dev'))return Response.json({rates:{GBP:0.85}});
+  if(u.includes('api.scryfall.com/cards/collection')){
+   return Response.json({data:[{id:'scry-1',cardmarket_id:100,prices:{eur:'2.00',eur_foil:'5.00'}}]});
+  }
+  throw Error(`Unexpected URL ${url}`);
+ };
+ try{
+  const {priceCards}=await import(`../prices.js?scry=${Date.now()}`);
+  const res=await priceCards([
+   {id:'c1',cardmarketId:'100',scryfallId:'scry-1',finish:'nonfoil'},
+   {id:'c2',cardmarketId:'100',scryfallId:'scry-1',finish:'foil'}
+  ]);
+  assert.deepEqual(res.prices.get('c1'),{eur:2,gbp:1.7});
+  assert.deepEqual(res.prices.get('c2'),{eur:5,gbp:4.25});
+ }finally{
+  globalThis.fetch=originalFetch;
+ }
+});

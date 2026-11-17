@@ -57,11 +57,11 @@ function render(){
  renderDeckManager(decks,clean);renderShoppingList(clean,decks);hydrateCards(clean);refreshPrices(clean);
 }
 async function refreshPrices(cards){
- const items=cards.filter(r=>r.value?.cardmarketId).map(r=>({id:r.id,cardmarketId:r.value.cardmarketId,finish:r.value.finish}));
- const key=items.map(c=>`${c.id}:${c.cardmarketId}:${c.finish}`).join('|');
+ const items=cards.filter(r=>r.value?.cardmarketId||r.value?.scryfallId).map(r=>({id:r.id,cardmarketId:r.value.cardmarketId,scryfallId:r.value.scryfallId,finish:r.value.finish}));
+ const key=items.map(c=>`${c.id}:${c.cardmarketId||''}:${c.scryfallId||''}:${c.finish}`).join('|');
  if(!items.length||key===lastPriceKey)return;
  lastPriceKey=key;
- try{const res=await priceCards(items);cardPrices=res.prices;render();}catch(e){console.info('Prices unavailable',e);}
+ try{const res=await priceCards(items);cardPrices=res.prices;render();}catch(e){lastPriceKey='';console.info('Prices unavailable',e);}
 }
 function renderShoppingList(cards,decks){
  const grouped=new Map();for(const row of cards.filter(r=>r.value.notOwned)){const key=String(row.value.name||'').trim().toLocaleLowerCase();if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(row);}const groups=[...grouped.values()].sort((a,b)=>String(a[0].value.name).localeCompare(String(b[0].value.name)));
