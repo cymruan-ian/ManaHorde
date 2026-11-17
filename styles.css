@@ -235,3 +235,6 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 .card-expand-btn:hover{background:#eae2d2;color:#176b53}
 .card-expand-btn.is-expanded{border-bottom:1px solid #e4dccd;background:#e6f2e8;color:#176b53}
 .card-expand-btn.is-expanded span{transform:rotate(180deg)}
+html:has(dialog[open]),body:has(dialog[open]){overflow:hidden;overscroll-behavior:none}
+dialog{overscroll-behavior:contain}
+dialog::backdrop{touch-action:none}
