@@ -29,7 +29,7 @@ test('index.html has home action labels, deck toggles, type sort, suggestions, s
 
 test('styles.css defines CTA cap/border, yellow star, not-owned overlay, fixed bracket, quarter stack, and mobile/foldable grids',async()=>{
  const css=await readFile(new URL('../styles.css',import.meta.url),'utf8');
- assert.match(css,/\.collection-deck-cta\{[^}]*height:40px;max-height:40px;[^}]*border:6px solid transparent/);
+ assert.match(css,/\.collection-deck-cta\{[^}]*height:40px;max-height:40px;[^}]*border:3px solid transparent/);
  assert.match(css,/\.collection-deck-cta \.deck-favourite-star\{[^}]*color:#f0c419!important/);
  assert.match(css,/\.collection-deck-cta\.bracket-5 \.collection-deck-sub\{color:#34463c\}/);
  assert.match(css,/background:rgba\(255,255,255,\.5\)/);
