@@ -215,3 +215,5 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 @media(horizontal-viewport-segments:2){
  .collection-deck-ctas,.mtg-news,.stats{column-gap:calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0) + 16px)}
 }
+#cards.cards{grid-template-columns:repeat(var(--collection-cols,3),minmax(0,1fr))}
+#cards.cards .card{min-width:0}
