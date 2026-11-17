@@ -162,8 +162,9 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
  @keyframes splash-sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
  .mobile-splash.is-done{opacity:0;pointer-events:none}
  .sidebar{position:static;width:100%;padding:12px 16px;display:flex;justify-content:center;align-items:center;border-right:0;border-bottom:1px solid #dfd6c3}
- .sidebar .brand{font-size:20px;letter-spacing:1.5px;justify-content:center}.sidebar .brand img{width:34px;height:34px}.brand-sub,.mana-colors,.nav-label,.sidebar-bottom,.sidebar .nav
- .home-drive-corner{position:absolute;top:7px;right:12px;z-index:10;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;width:auto}
+  .sidebar .brand{font-size:20px;letter-spacing:1.5px;justify-content:center}.sidebar .brand img{width:34px;height:34px}
+  .brand-sub,.mana-colors,.nav-label,.sidebar-bottom,.sidebar .nav{display:none}
+  .home-drive-corner{position:absolute;top:7px;right:12px;z-index:10;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;width:auto}
  
  main{margin-left:0;padding:0 18px}
  header{height:58px}
@@ -362,3 +363,36 @@ main{padding-bottom:82px}
 
 #cards.cards .collection-card-title{margin:4px 5px 2px;min-height:0;font-size:clamp(12px,calc(60px / var(--collection-cols,3) + 3px),16px)}
 
+
+.deck-row{padding:0}
+.deck-row-copy{bottom:0}
+
+
+/* Mobile Collection toolbar: full-width search above evenly sized controls when needed */
+@media(max-width:760px){
+ #collection-page .collection-panel{container-type:inline-size;container-name:collection-layout}
+ #collection-page .toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:8px;padding:13px}
+ #collection-page .toolbar .search{grid-column:1/-1;min-width:0;width:100%;min-height:42px;flex:none}
+ #collection-page .toolbar #filter-sort-toggle,#collection-page .toolbar #collection-filters{width:100%;min-width:0;min-height:40px;padding:9px 6px;font-size:11px}
+}
+@container collection-layout (min-width:550px){
+ #collection-page .toolbar{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr)}
+ #collection-page .toolbar .search{grid-column:auto}
+}
+
+.deck-row-copy,.deck-row:has(.deck-validity.invalid) .deck-row-copy{padding-right:12px}
+.deck-row-copy>strong{width:100%;text-align:center}
+
+
+#cards.cards{align-items:stretch}
+
+
+@media(max-width:900px){.sidebar .nav{display:none!important}}
+
+
+/* Keep the Collection controls inside the toolbar at tablet and compact desktop widths */
+@media(min-width:761px) and (max-width:1100px){
+ #collection-page .toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:stretch;gap:8px;padding:13px}
+ #collection-page .toolbar .search{grid-column:auto;flex:none;width:100%;min-width:0;min-height:40px}
+ #collection-page .toolbar #filter-sort-toggle,#collection-page .toolbar #collection-filters{min-width:0;padding:8px 10px;font-size:11px}
+}
