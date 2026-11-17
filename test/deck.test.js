@@ -131,3 +131,17 @@ test('pickCollectionStats selects 4 analytics plus Collection Value as the 5th s
  assert.equal(stats[4].label,'COLLECTION VALUE');
  assert.equal(stats[4].value,'£5.00');
 });
+test('pickCollectionStats pins up to 3 favourite stats first and fills spare slots randomly',()=>{
+ const owned=[{id:'a',value:{...baseCard,name:'Sol Ring',quantity:2,rarity:'uncommon',set:'c21',colorIdentity:['C'],validated:true}}];
+ const prices=new Map([['a',{gbp:2.5,eur:2.9}]]);
+ const twoFavs=pickCollectionStats({ownedClean:owned,allCards:owned,decks:[],conflicts:[],prices,favourites:['topCard','sets']});
+ assert.equal(twoFavs.length,5);
+ assert.equal(new Set(twoFavs.map(s=>s.id)).size,5);
+ assert.deepEqual(twoFavs.slice(0,2).map(s=>s.id),['topCard','sets']);
+ assert.equal(twoFavs[4].id,'value');
+ const capped=pickCollectionStats({ownedClean:owned,allCards:owned,decks:[],conflicts:[],prices,favourites:['total','unique','foils','sets','invalid']});
+ assert.equal(capped.length,5);
+ assert.equal(new Set(capped.map(s=>s.id)).size,5);
+ assert.deepEqual(capped.slice(0,3).map(s=>s.id),['total','unique','foils']);
+ assert.equal(capped[4].id,'value');
+});

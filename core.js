@@ -119,7 +119,7 @@ export function groupCollectionEntries(rows,{ungroup=false,activeDeck=''}={}){
  }
  return [...groups.values()].map(g=>({...g,printingsCount:new Set(g.rows.map(r=>{const v=r.value||r.heads.find(h=>h.value)?.value;return `${v.scryfallId||v.set||''}:${v.number||''}`})).size}));
 }
-export function pickCollectionStats({ownedClean=[],allCards=[],decks=[],conflicts=[],prices=new Map(),order=null}){
+export function pickCollectionStats({ownedClean=[],allCards=[],decks=[],conflicts=[],prices=new Map(),order=null,favourites=[]}){
  const qty=r=>Number(r.value?.quantity)||0;
  const totalCards=ownedClean.reduce((s,r)=>s+qty(r),0);
  const uniquePrintings=new Set(ownedClean.map(r=>r.value.scryfallId||r.value.name.toLowerCase())).size;
@@ -157,8 +157,14 @@ export function pickCollectionStats({ownedClean=[],allCards=[],decks=[],conflict
   {id:'topColor',label:'TOP MANA COLOUR',value:topColor&&topColor[1]>0?colorNames[topColor[0]]:'Colorless',sub:topColor&&topColor[1]>0?`${topColor[1].toLocaleString()} cards in identity`:'Add coloured cards'},
   {id:'topCard',label:'TOP VALUED CARD',value:topCard?`£${topPrice.toFixed(2)}`:'—',sub:topCard||'Prices loading or unavailable'}
  ];
- const keys=Array.isArray(order)&&order.length>=4?order:pool.map(s=>s.id).sort(()=>Math.random()-0.5).slice(0,4);
- const chosen=keys.map(id=>pool.find(s=>s.id===id)).filter(Boolean).slice(0,4);
+ const poolIds=new Set(pool.map(s=>s.id));
+ const favIds=[...new Set((Array.isArray(favourites)?favourites:[]).filter(id=>poolIds.has(id)))].slice(0,3);
+ const kept=Array.isArray(order)?order.filter(id=>poolIds.has(id)&&!favIds.includes(id)):[];
+ const used=new Set([...favIds,...kept]);
+ const needed=Math.max(0,4-favIds.length);
+ const spare=kept.length>=needed?kept.slice(0,needed):[...kept,...pool.map(s=>s.id).filter(id=>!used.has(id)).sort(()=>Math.random()-0.5).slice(0,needed-kept.length)];
+ const keys=[...favIds,...spare].slice(0,4);
+ const chosen=keys.map(id=>pool.find(s=>s.id===id)).filter(Boolean);
  const colValue=sumCardValues(ownedClean,prices);
  return [...chosen,{id:'value',label:'COLLECTION VALUE',value:colValue.pricedCount?`£${colValue.total.toFixed(2)}`:'—',sub:colValue.pricedCount?`Across ${colValue.pricedCount} priced ${colValue.pricedCount===1?'card':'cards'}`:'No priced cards yet'}];
 }
