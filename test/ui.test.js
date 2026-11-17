@@ -17,6 +17,7 @@ test('index.html has home action labels, deck toggles, type sort, suggestions, s
  assert.match(html,/id="collection-value"/);
  assert.match(html,/id="commander-guide-dialog"/);
  assert.match(html,/id="gemini-api-key"/);
+ assert.match(html,/id="mobile-bottom-nav"/);
  assert.doesNotMatch(html,/class="breadcrumb"/);
 });
 

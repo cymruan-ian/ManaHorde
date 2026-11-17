@@ -72,6 +72,7 @@ function renderDeckAssignments(value){
 }
 function renderDeckManager(decks,cards){
  const validDecks=decks.filter(d=>d.value&&!d.conflict).sort((a,b)=>Number(!!b.value.favourite)-Number(!!a.value.favourite));$('decks-nav').classList.toggle('active',currentPage==='deck');$('home-nav').classList.toggle('active',currentPage==='home');$('collection-nav').classList.toggle('active',currentPage==='collection');$('shopping-nav').classList.toggle('active',currentPage==='shopping');
+ document.querySelectorAll('[data-mobile-nav]').forEach(b=>b.classList.toggle('active',b.dataset.mobileNav==={home:'home-nav',collection:'collection-nav',shopping:'shopping-nav',deck:'decks-nav'}[currentPage]));
  const deckButton=d=>{const members=cards.filter(r=>(r.value.deckCounts?.[d.id]||0)>0),count=members.reduce((n,r)=>n+r.value.deckCounts[d.id],0),cmd=(d.value.commanders||[]).map(id=>members.find(r=>r.id===id)).find(Boolean)||members.find(r=>r.value.commanderEligible),art=cmd&&artUrl(cmd.value),checks=validateCommanderDeck(d,members,cards);return {members,count,cmd,art,checks};};
  $('decks-submenu').innerHTML=`<button type="button" class="deck-submenu-new" data-sidebar-new>＋ New Deck</button>${validDecks.map(d=>{const {art}=deckButton(d);return `<button type="button" class="deck-submenu-item" data-sidebar-deck="${esc(d.id)}">${art?`<span class="deck-menu-art"><img src="${esc(art)}" alt="" loading="lazy"></span>`:'<span class="deck-menu-art deck-submenu-placeholder">◇</span>'}<span class="deck-menu-copy">${esc(d.value.name)}</span></button>`;}).join('')}`;
  const deckItems=validDecks.map(d=>({d,...deckButton(d)})).filter(item=>(!$('deck-filter-legal')?.checked||item.checks.valid)&&(!$('deck-filter-favourite')?.checked||item.d.value.favourite));
@@ -227,6 +228,7 @@ async function searchCards(url=null){
 }
 document.querySelectorAll('.close').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
 for(const id of ['add-button','first-card','add-nav'])$(id).onclick=()=>openLookup();
+$('mobile-bottom-nav').onclick=e=>{const b=e.target.closest('[data-mobile-nav]');if(b)$(b.dataset.mobileNav)?.click();};
 $('home-nav').onclick=()=>{currentPage='home';selectedDeck='';$('decks-submenu').hidden=true;$('decks-nav').setAttribute('aria-expanded','false');render();window.scrollTo({top:0,behavior:'smooth'});};$('home-open-collection').onclick=()=>$('collection-nav').click();
 $('open-information').onclick=()=>{currentPage='information';selectedDeck='';render();window.scrollTo({top:0,behavior:'smooth'});};$('information-home').onclick=()=>$('home-nav').click();
 $('shopping-nav').onclick=()=>{currentPage='shopping';selectedDeck='';render();window.scrollTo({top:0,behavior:'smooth'});};$('export-shopping').onclick=exportShoppingList;
