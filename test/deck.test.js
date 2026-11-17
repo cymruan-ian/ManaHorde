@@ -9,6 +9,7 @@ import {
  suggestDeckPlaystyle,
  shoppingCsv,
  sumCardValues,
+ groupCollectionEntries,
  validateEvents
 } from '../core.js';
 
@@ -93,4 +94,22 @@ test('sumCardValues totals priced cards for collection and per-deck counts',()=>
  ];
  assert.deepEqual(sumCardValues(items,prices),{total:12.5,pricedCount:5});
  assert.deepEqual(sumCardValues(items,prices,r=>r.value.deckCounts.d1),{total:7.0,pricedCount:3});
+});
+
+test('groupCollectionEntries combines versions by default and keeps distinct versions when ungrouped',()=>{
+ const rows=[
+  {id:'1',heads:[{at:'2026-11-16T12:00:00Z'}],value:{...baseCard,name:'Sol Ring',oracleId:'o-sol',scryfallId:'s-1',set:'c21',number:'1',finish:'nonfoil',quantity:2,deckCounts:{d1:1}}},
+  {id:'2',heads:[{at:'2026-11-16T12:00:00Z'}],value:{...baseCard,name:'Sol Ring',oracleId:'o-sol',scryfallId:'s-1',set:'c21',number:'1',finish:'nonfoil',quantity:1,deckCounts:{d2:1}}},
+  {id:'3',heads:[{at:'2026-11-16T12:00:00Z'}],value:{...baseCard,name:'Sol Ring',oracleId:'o-sol',scryfallId:'s-2',set:'cmr',number:'2',finish:'foil',quantity:1,deckCounts:{}}}
+ ];
+ const grouped=groupCollectionEntries(rows,{ungroup:false});
+ assert.equal(grouped.length,1);
+ assert.equal(grouped[0].quantity,4);
+ assert.equal(grouped[0].printingsCount,2);
+ assert.deepEqual(grouped[0].deckCounts,{d1:1,d2:1});
+
+ const ungrouped=groupCollectionEntries(rows,{ungroup:true});
+ assert.equal(ungrouped.length,2);
+ assert.equal(ungrouped[0].quantity,3);
+ assert.equal(ungrouped[1].quantity,1);
 });

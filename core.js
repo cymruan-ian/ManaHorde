@@ -104,3 +104,18 @@ export function sumCardValues(items,prices,getQty=r=>r.value?.quantity||0){
  for(const r of items){const p=prices.get(r.id),qty=Number(getQty(r))||0;if(p&&qty>0){total+=p.gbp*qty;pricedCount+=qty;}}
  return {total,pricedCount};
 }
+export function groupCollectionEntries(rows,{ungroup=false,activeDeck=''}={}){
+ const groups=new Map();
+ for(const r of rows){
+  const v=r.value||r.heads.find(h=>h.value)?.value;if(!v)continue;
+  const cardKey=v.oracleId||String(v.name||'').trim().toLowerCase();
+  const key=r.conflict?`conflict:${r.id}`:ungroup?`exact:${cardKey}|${v.scryfallId||''}|${v.set||''}|${v.number||''}|${v.finish||''}|${v.condition||''}|${v.language||''}|${v.location||''}`:`card:${cardKey}`;
+  const qty=activeDeck?(v.deckCounts?.[activeDeck]||0):(Number(v.quantity)||0);
+  if(!groups.has(key)){groups.set(key,{primary:r,rows:[r],quantity:qty,deckCounts:{...(v.deckCounts||{})}});}
+  else{
+   const g=groups.get(key);g.rows.push(r);g.quantity+=qty;
+   for(const [did,count] of Object.entries(v.deckCounts||{}))g.deckCounts[did]=(g.deckCounts[did]||0)+count;
+  }
+ }
+ return [...groups.values()].map(g=>({...g,printingsCount:new Set(g.rows.map(r=>{const v=r.value||r.heads.find(h=>h.value)?.value;return `${v.scryfallId||v.set||''}:${v.number||''}`})).size}));
+}
