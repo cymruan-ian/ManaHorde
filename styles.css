@@ -108,7 +108,11 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 .commander-guide-section h3{font-size:14px;margin:0 0 4px;color:#176b53}
 .commander-guide-section p{margin:0;font-size:12.5px;color:#4a5850}
 .mobile-bottom-nav{display:none}
-.home-heading-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.home-page .page-heading{margin-bottom:18px}
+.home-heading-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 24px}
+.home-heading-actions .button{width:100%;min-height:48px;font-size:14px;border-radius:10px}
+.home-lookup-btn{background:linear-gradient(180deg,#d89e2d,#b87f17);color:#fffdf8;border-color:#a87212;box-shadow:0 2px 8px rgba(168,114,18,.25)}
+.home-lookup-btn:hover{background:linear-gradient(180deg,#c99023,#a77112)}
 .card-lookup-result{margin-top:14px}
 .card-lookup-hero{display:grid;grid-template-columns:210px minmax(0,1fr);gap:20px;align-items:start}
 .card-lookup-art img{width:100%;border-radius:10px;display:block}
