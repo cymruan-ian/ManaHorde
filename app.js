@@ -446,17 +446,25 @@ function scheduleAutoSync(){
  autoSyncTimer=setTimeout(()=>runDriveSync({quiet:true}),2500);
 }
 async function runDriveSync({quiet=false}={}){
- if(!connected())return;
+ if(!connected()){updateDrive();if(!quiet){$('drive-status').textContent='Session not connected. Tap Connect Google Drive first.';toast('Connect Google Drive first.');}return;}
  if(driveBusy){if(!quiet)toast('Drive sync is already in progress…');return;}
  driveBusy=true;$('sync-drive').disabled=true;$('home-sync-drive').disabled=true;$('home-sync-drive').classList.add('is-syncing');$('disconnect-drive').disabled=true;$('drive-status').textContent='Merging snapshots and saving a dated backup…';
+ let syncMessage='';
  try{
   const merged=await syncDrive(events);
   await commit(merged,{fromSync:true});
-  localStorage.setItem('arcana-last-sync',new Date().toISOString());
+  const now=new Date().toISOString();
+  localStorage.setItem('arcana-last-sync',now);
   render();
+  syncMessage=`Sync complete · ${merged.length} revisions · ${new Date(now).toLocaleTimeString()}`;
   if(!quiet)toast('Drive sync complete. A dated backup was saved.');
- }catch(e){if(!quiet)report(e);else console.info('Auto sync skipped:',e);}
- finally{driveBusy=false;$('sync-drive').disabled=false;$('home-sync-drive').disabled=false;$('home-sync-drive').classList.remove('is-syncing');$('disconnect-drive').disabled=false;updateDrive();}
+ }catch(e){
+  syncMessage=`Sync failed: ${e.message||'Unknown error'}`;
+  if(!quiet)report(e);else console.info('Auto sync skipped:',e);
+ }finally{
+  driveBusy=false;$('sync-drive').disabled=false;$('home-sync-drive').disabled=false;$('home-sync-drive').classList.remove('is-syncing');$('disconnect-drive').disabled=false;updateDrive();
+  if(syncMessage)$('drive-status').textContent=syncMessage;
+ }
 }
 function updateDrive(){$('connect-drive').hidden=connected();$('sync-drive').hidden=!connected();$('disconnect-drive').hidden=!connected();$('home-connect-drive').hidden=connected();$('home-sync-drive').hidden=!connected();$('drive-status').textContent=connected()?'Google Drive connected for this session.':clientId?'Ready to connect to Google Drive.':'Google Drive needs one-time setup. Open Settings & install to add your client ID.';}
 $('connect-drive').onclick=$('home-connect-drive').onclick=async()=>{try{if(!clientId){$('backup-dialog').close();$('client-id').value='';show('settings-dialog');return;}if(!globalThis.google?.accounts?.oauth2){await prepareGoogle();toast('Google sign-in is ready. Press Connect Google Drive again.');return;}await authorize(clientId);updateDrive();scheduleDriveKeepAlive();if(autoSyncDrive)await runDriveSync({quiet:true});toast('Drive connected. Press Sync now to merge and back up.');}catch(e){report(e);}};
