@@ -410,8 +410,9 @@ main{padding-bottom:82px}
 
 /* Standalone card lookup and mobile camera scanner */
 .card-lookup-page{max-width:1080px;margin:0 auto;padding-bottom:40px}
+.add-card-page,.card-scanner-page{max-width:1080px;margin:0 auto;padding-bottom:40px}
+.page-heading-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .lookup-page-panel{padding:clamp(16px,3vw,28px);border:1px solid #dfd3b8;border-radius:24px;background:rgba(255,253,248,.92);box-shadow:0 8px 26px rgba(44,51,40,.08)}
-.card-scanner-tools{margin:0 0 22px;padding:18px;border:1px solid #d8d4b9;border-radius:20px;background:linear-gradient(135deg,rgba(241,223,154,.25),rgba(91,151,210,.12),rgba(79,153,100,.12))}
 .scanner-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .scanner-heading h2{margin:0 0 4px;color:#20382f;font-size:19px}
 .scanner-heading p,.scanner-status{margin:0;color:#586960;font-size:13px;line-height:1.55}
@@ -422,15 +423,15 @@ main{padding-bottom:82px}
 .scanner-camera-actions,.scanner-text-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .scanner-camera-actions{justify-content:center;margin:0}
 .scanner-status{margin-top:12px}
-.scanner-search-button{margin-top:10px}
 #card-lookup-form{max-width:740px}
 #card-lookup-status{color:#52645b}
 @media(max-width:640px){
  .card-lookup-page>.page-heading{align-items:center;gap:10px}
  .card-lookup-page>.page-heading h1{font-size:clamp(25px,7vw,34px)}
  .card-lookup-page>.page-heading .button{white-space:nowrap;padding:9px 12px}
+ .add-card-page>.page-heading,.card-scanner-page>.page-heading{align-items:flex-start;gap:10px}
+ .page-heading-actions{justify-content:flex-end}
  .lookup-page-panel{padding:14px;border-radius:20px}
- .card-scanner-tools{padding:14px;border-radius:17px}
  .scanner-heading{align-items:flex-start;flex-direction:column}
  .scanner-camera-wrap{margin-left:-6px;margin-right:-6px;padding:8px}
  .scanner-card-guide{top:calc(50% - 25px);width:min(66vw,270px)}
