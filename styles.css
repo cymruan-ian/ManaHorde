@@ -33,7 +33,7 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
 
 @media(max-width:760px){.sidebar{grid-template-columns:1fr repeat(4,42px)}.sidebar #collection-nav{display:flex}}.deck-row .deck-thumb-empty{font-size:32px;color:#988c6e}.deck-search-panel{margin-top:12px}
 
-#decks-nav .nav-caret{margin-left:auto;font-size:14px;color:var(--muted);transition:transform .15s}#decks-nav[aria-expanded=true] .nav-caret{transform:rotate(180deg)}.decks-submenu{display:flex;flex-direction:column;gap:5px;max-height:46vh;overflow:auto;padding:4px 3px 10px 14px}.deck-submenu-new,.deck-submenu-item{width:100%;border:0;border-radius:9px;background:transparent;color:#555f5a;padding:7px 8px;text-align:left}.deck-submenu-new{color:#a16e13;font-size:11px;font-weight:600}.deck-submenu-item{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600}.deck-submenu-new:hover{background:#f2eee5}.deck-submenu-item:hover{background:transparent;color:#176b53}.deck-menu-art{position:relative;display:block;flex:none;width:58px;height:38px;border-radius:5px;background:#e8e1d4}.deck-menu-art img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:5px}.deck-menu-art .deck-favourite-star{font-size:16px;top:-2px;left:-2px}.deck-submenu-placeholder{display:grid;place-items:center;color:var(--gold);font-size:22px}.deck-menu-copy{min-width:0;display:flex;flex-direction:column;gap:4px}.deck-menu-copy small{font-size:9px}.deck-menu-copy .needs-fix{color:#f0bf70}.deck-menu-copy .is-valid{color:#9fd0a8}.home-page .stats{margin-top:0}.news-panel{border:1px solid #dfd3b8;border-radius:20px;background:linear-gradient(140deg,#fefcf6,#f4eef7 58%,#edf4ef);padding:24px;margin:0 0 30px;color:var(--text)}.news-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.news-heading h2{font:30px "Open Sans","Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;margin:8px 0 0}.news-heading>a{font-size:11px;color:#176b53}.mtg-news{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.news-item{border:1px solid #e4dcc8;border-radius:14px;background:#fffefb;padding:15px;display:flex;flex-direction:column;justify-content:space-between;min-height:120px;transition:border-color .15s,box-shadow .15s}.news-item:hover{border-color:#c49432;box-shadow:0 4px 14px rgba(130,102,42,.12)}.news-item h3{font:16px "Open Sans","Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;margin:0 0 9px;line-height:1.35}.news-item h3 a{color:#27382e;text-decoration:none}.news-item h3 a:hover{text-decoration:underline}.news-item p{font-size:10px;line-height:1.55;color:#718078;margin:0}.news-item time{font-size:9px;color:#8c8b7f;margin-top:12px}.news-panel .muted a{color:#176b53}.stats,.collection-panel{border-radius:16px}.card{border-radius:14px}.card-deck-assignments{border-radius:14px}.deck-row{border-radius:14px}.deck-display-card{border-radius:13px}.deck-add,.deck-members{border-radius:14px}.deck-issues{border-radius:12px;background:#fbf0d8;padding:12px 14px 12px 30px}.deck-search-panel{padding:12px;border-radius:13px;background:#f8f5ed}.assignment-row input[type=radio],.assignment-row input[type=checkbox]{display:inline-block!important;width:auto!important;margin:0 7px 0 0!important;accent-color:#176b53}.assignment-row input[type=number]{display:inline-block!important;margin-left:auto!important;width:75px!important}.assignment-row input[type=number]:disabled{opacity:.35}.assignment-warning{font-size:10px;color:#a15d14}.assignment-total{font-size:10px;color:var(--muted)}#deck-page-content>.page-heading{margin-top:12px;margin-bottom:20px}.deck-back{display:inline-block;margin:8px 0}.deck-row-copy .deck-validity{white-space:nowrap}.deck-detail{border-radius:14px}@media(max-width:760px){.sidebar{grid-template-columns:minmax(78px,1fr) repeat(5,34px);gap:4px}.sidebar .brand{font-size:0;letter-spacing:0}.sidebar .brand img{width:34px}.sidebar .brand-sub,.sidebar .mana-colors{display:none}.sidebar .nav{width:34px;height:38px;padding:4px}.sidebar .nav>span:first-child{font-size:20px}.sidebar #home-nav,.sidebar #collection-nav{display:flex}.sidebar #home-nav,.sidebar #collection-nav{font-size:0}.sidebar .nav-caret{display:none}.decks-submenu{position:absolute;z-index:12;top:62px;right:10px;width:min(260px,80vw);background:#10231e;border:1px solid var(--line);border-radius:13px;padding:9px;box-shadow:0 10px 30px #0006}.home-page .stats{margin-top:0}.news-panel{padding:16px}.news-heading h2{font-size:24px}.mtg-news{grid-template-columns:1fr}.news-item{min-height:unset}}
+.home-page .stats{margin-top:0}.news-panel{border:1px solid #dfd3b8;border-radius:20px;background:linear-gradient(140deg,#fefcf6,#f4eef7 58%,#edf4ef);padding:24px;margin:0 0 30px;color:var(--text)}.news-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.news-heading h2{font:30px "Open Sans","Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;margin:8px 0 0}.news-heading>a{font-size:11px;color:#176b53}.mtg-news{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.news-item{border:1px solid #e4dcc8;border-radius:14px;background:#fffefb;padding:15px;display:flex;flex-direction:column;justify-content:space-between;min-height:120px;transition:border-color .15s,box-shadow .15s}.news-item:hover{border-color:#c49432;box-shadow:0 4px 14px rgba(130,102,42,.12)}.news-item h3{font:16px "Open Sans","Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;margin:0 0 9px;line-height:1.35}.news-item h3 a{color:#27382e;text-decoration:none}.news-item h3 a:hover{text-decoration:underline}.news-item p{font-size:10px;line-height:1.55;color:#718078;margin:0}.news-item time{font-size:9px;color:#8c8b7f;margin-top:12px}.news-panel .muted a{color:#176b53}.stats,.collection-panel{border-radius:16px}.card{border-radius:14px}.card-deck-assignments{border-radius:14px}.deck-row{border-radius:14px}.deck-display-card{border-radius:13px}.deck-add,.deck-members{border-radius:14px}.deck-issues{border-radius:12px;background:#fbf0d8;padding:12px 14px 12px 30px}.deck-search-panel{padding:12px;border-radius:13px;background:#f8f5ed}.assignment-row input[type=radio],.assignment-row input[type=checkbox]{display:inline-block!important;width:auto!important;margin:0 7px 0 0!important;accent-color:#176b53}.assignment-row input[type=number]{display:inline-block!important;margin-left:auto!important;width:75px!important}.assignment-row input[type=number]:disabled{opacity:.35}.assignment-warning{font-size:10px;color:#a15d14}.assignment-total{font-size:10px;color:var(--muted)}#deck-page-content>.page-heading{margin-top:12px;margin-bottom:20px}.deck-back{display:inline-block;margin:8px 0}.deck-row-copy .deck-validity{white-space:nowrap}.deck-detail{border-radius:14px}@media(max-width:760px){.sidebar{grid-template-columns:minmax(78px,1fr) repeat(5,34px);gap:4px}.sidebar .brand{font-size:0;letter-spacing:0}.sidebar .brand img{width:34px}.sidebar .brand-sub,.sidebar .mana-colors{display:none}.sidebar .nav{width:34px;height:38px;padding:4px}.sidebar .nav>span:first-child{font-size:20px}.sidebar #home-nav,.sidebar #collection-nav{display:flex}.sidebar #home-nav,.sidebar #collection-nav{font-size:0}.home-page .stats{margin-top:0}.news-panel{padding:16px}.news-heading h2{font-size:24px}.mtg-news{grid-template-columns:1fr}.news-item{min-height:unset}}
 
 .commander-action{align-self:flex-start;margin-top:5px;border:1px solid #b79248;border-radius:999px;padding:6px 10px;background:#fbf3df;color:#694d12;font-size:9px;font-weight:700}.commander-action:hover:not(:disabled){background:#efdfb5}.commander-action:disabled{opacity:1;border-color:#d4b45f;background:#f2e4bd;color:#70551a;cursor:default}.deck-display-card.is-commander{padding:0}
 
@@ -162,9 +162,9 @@ footer{color:#7d8279}dialog{background:#fffdf8;color:#28312d;border-color:#ddd4c
  @keyframes splash-sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
  .mobile-splash.is-done{opacity:0;pointer-events:none}
  .sidebar{position:static;width:100%;padding:12px 16px;display:flex;justify-content:center;align-items:center;border-right:0;border-bottom:1px solid #dfd6c3}
- .sidebar .brand{font-size:20px;letter-spacing:1.5px;justify-content:center}.sidebar .brand img{width:34px;height:34px}.brand-sub,.mana-colors,.nav-label,.sidebar-bottom,.sidebar .nav,.nav-caret{display:none!important}
+ .sidebar .brand{font-size:20px;letter-spacing:1.5px;justify-content:center}.sidebar .brand img{width:34px;height:34px}.brand-sub,.mana-colors,.nav-label,.sidebar-bottom,.sidebar .nav
  .home-drive-corner{position:absolute;top:7px;right:12px;z-index:10;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;width:auto}
- .decks-submenu{position:absolute;z-index:12;top:62px;right:12px;width:min(270px,82vw);background:#fffdf8;border:1px solid #dfd6c3;border-radius:14px;padding:10px;box-shadow:0 12px 32px rgba(23,39,31,.18)}
+ 
  main{margin-left:0;padding:0 18px}
  header{height:58px}
  .page-heading{margin:24px 0 20px;gap:12px}
@@ -241,3 +241,121 @@ dialog::backdrop{touch-action:none}
 .card-deck-thumb-btn{width:28px;height:28px;padding:0;border:1.5px solid #c8d6cc;border-radius:50%;overflow:hidden;background:#e8e1d4;color:#9d731f;font-size:12px;display:grid;place-items:center;flex:none;cursor:pointer;transition:transform .15s,border-color .15s}
 .card-deck-thumb-btn:hover{transform:scale(1.08);border-color:#176b53}
 .card-deck-thumb-btn img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Add new cards, the persistent quick-add action, and page toolbar controls */
+.add-action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:16px 0 36px}
+.add-action-card{display:flex;min-height:228px;flex-direction:column;justify-content:space-between;gap:20px;padding:22px;border:1px solid #dfd3b8;border-radius:20px;background:linear-gradient(145deg,#fffdf8,#f5f0e6);color:#263b35;box-shadow:0 5px 20px rgba(23,39,31,.07)}
+.add-action-card h2{font:23px "Open Sans","Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;margin:12px 0 8px}
+.add-action-card p{font-size:12px;line-height:1.7;color:#718078;margin:0}
+.add-action-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#edf1df;color:#866319;font-size:25px;font-weight:700}
+.add-action-card .button{align-self:flex-start;min-width:126px}
+.floating-add-button{position:fixed;z-index:14;right:28px;bottom:24px;width:60px;height:60px;border:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(140deg,#f1df9a,#dfc38a);color:#1c3329;font-size:36px;line-height:1;box-shadow:0 8px 24px rgba(0,0,0,.32),0 0 0 3px rgba(223,195,138,.18);transition:transform .16s,box-shadow .16s}
+.floating-add-button:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.34),0 0 0 5px rgba(223,195,138,.2)}
+main{padding-bottom:82px}
+#collection-page .toolbar .search{flex:1 1 440px;min-width:min(440px,100%)}
+.filter-menu{position:relative;flex:none}
+.filter-menu>summary{list-style:none;display:inline-flex;min-width:112px;justify-content:center}
+.filter-menu>summary::-webkit-details-marker{display:none}
+.filter-menu-panel{position:absolute;z-index:30;top:calc(100% + 8px);right:0;width:230px;padding:14px;border:1px solid #dfd6c3;border-radius:13px;background:#fffdf8;box-shadow:0 12px 32px rgba(23,39,31,.22)}
+.filter-menu-panel label{display:block;color:#38483f;font-size:11px;font-weight:700}
+.filter-menu-panel select{display:block;width:100%;margin-top:7px;color:#293a31;background:#fff;border-color:#d9d2c4}
+.collection-page-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;min-height:78px}
+.collection-page-title{grid-column:1;margin:0;text-align:center;font-size:clamp(26px,3vw,40px);letter-spacing:-1px}
+.collection-page-heading .collection-heading-actions{grid-column:2;display:flex;align-items:center;gap:10px}
+.collection-page-heading .home-drive-corner{padding:0}
+.collection-page-heading #collection-display-btn{width:42px;height:42px;padding:8px}
+
+/* Consistent My Decks cards with an identity-coloured favourite treatment */
+.deck-row{position:relative;height:260px;min-height:0;display:flex;flex-direction:column;gap:0;overflow:hidden;padding:12px 12px 48px;border:2px solid var(--line);border-radius:16px;background:#fffefa;color:#24372d;text-align:left;transition:transform .15s,box-shadow .15s,border-color .15s}
+.deck-row:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.17)}
+.deck-row.is-favourite{border-color:transparent;background:linear-gradient(rgba(255,254,250,.92),rgba(255,254,250,.92)) padding-box,var(--deck-fav-fill,#cfc9bc) border-box}
+.deck-open{position:relative;z-index:1;display:flex;width:100%;height:100%;min-height:0;flex:1;flex-direction:column;align-items:stretch;gap:9px;padding:0;border:0;background:transparent;color:inherit;text-align:left}
+.deck-thumb-wrapper{width:100%;height:124px;flex:none;overflow:hidden;border-radius:9px;background:#eee9de}
+.deck-row .deck-thumb{display:block;width:100%;height:100%;object-fit:cover;border-radius:0}
+.deck-row .deck-thumb-empty{width:100%;height:100%;display:grid;place-items:center}
+.deck-row-copy{display:flex;min-width:0;width:100%;flex-direction:column;align-items:flex-start;gap:5px;margin:0}
+.deck-row-copy>strong{font:700 15px/1.35 "Open Sans","Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+.deck-row-copy>span{font-size:10px;color:#778078}
+.deck-row .deck-validity{position:absolute;left:12px;right:12px;bottom:11px;height:28px;min-height:28px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0;padding:4px 8px;border-radius:9px;font-size:10px;font-weight:700;line-height:1;white-space:nowrap;text-overflow:ellipsis}
+.deck-favourite-toggle{position:absolute;z-index:3;top:7px;right:7px;width:36px;height:36px;padding:0;display:grid;place-items:center;border:1px solid rgba(255,255,255,.8);border-radius:50%;background:#fffdf5;color:#7e7666;font:26px/1 "Segoe UI Symbol","Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.24)}
+.deck-favourite-toggle[aria-pressed=true]{background:var(--deck-fav-fill,#cfc9bc);color:#f0c419;text-shadow:0 1px 2px #17271f,0 0 3px #17271f;border-color:rgba(255,255,255,.75)}
+.deck-favourite-toggle:focus-visible{outline:2px solid #d5a845;outline-offset:2px}
+@media(max-width:900px){.floating-add-button{right:18px;bottom:calc(10dvh + 18px + env(safe-area-inset-bottom))}body{padding-bottom:calc(10dvh + 78px + env(safe-area-inset-bottom))}}
+@media(max-width:760px){.add-action-grid{grid-template-columns:1fr}.add-action-card{min-height:190px;padding:18px}.collection-page-heading{grid-template-columns:minmax(0,1fr) auto;gap:8px;min-height:62px;margin:24px 0}.collection-page-title{font-size:clamp(22px,6vw,30px);letter-spacing:-.8px}.collection-page-heading .collection-heading-actions{gap:6px}.collection-page-heading #add-button{width:42px;min-width:42px;padding:7px;font-size:0}.collection-page-heading #add-button::before{content:"＋";font-size:21px}.collection-page-heading #collection-display-btn{width:42px;min-width:42px}.#collection-page .toolbar .search{flex:1 1 100%;min-width:100%}.filter-menu{flex:1}.filter-menu>summary{width:100%}.deck-row{height:236px}.deck-thumb-wrapper{height:108px}}
+/* My Decks: full art cards with a compact title overlay and sticker alert */
+.deck-row{overflow:visible;background-color:#26332e;background-image:linear-gradient(180deg,rgba(16,24,22,.72) 0%,rgba(16,24,22,.36) 32%,rgba(16,24,22,.06) 68%,rgba(16,24,22,.5) 100%),var(--deck-art,none);background-size:cover;background-position:center;border:1px solid rgba(255,255,255,.5);box-shadow:0 5px 16px rgba(19,31,26,.16)}
+.deck-row::before{content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.deck-row.is-favourite{border:2px solid transparent;background-image:linear-gradient(180deg,rgba(16,24,22,.72) 0%,rgba(16,24,22,.36) 32%,rgba(16,24,22,.06) 68%,rgba(16,24,22,.5) 100%),var(--deck-art,none),var(--deck-fav-fill,#cfc9bc);background-origin:border-box;background-clip:padding-box,border-box,border-box}
+.deck-open{z-index:1;justify-content:flex-start;align-items:center;flex:1 1 auto;height:100%;padding:0;background:transparent;color:#fff;text-align:center}
+.deck-row-copy{width:100%;max-height:33%;min-height:0;flex:none;align-items:center;justify-content:flex-start;gap:2px;margin:0;padding:13px 48px 10px 12px;border-radius:13px 13px 0 0;background:linear-gradient(180deg,rgba(14,22,20,.72),rgba(14,22,20,.3));text-shadow:0 1px 5px rgba(0,0,0,.95)}
+.deck-row-copy>strong{max-width:100%;max-height:2.7em;font-size:16px;line-height:1.3;text-align:center;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}
+.deck-row-copy>span{font-size:10px;color:rgba(255,255,255,.88)}
+.deck-row .deck-validity{z-index:3;left:auto;right:-9px;bottom:13px;width:max-content;max-width:78%;height:30px;min-height:30px;justify-content:flex-start;margin:0;padding:5px 16px 5px 12px;border:1px solid rgba(255,255,255,.8);border-right:0;border-radius:12px 0 0 12px;box-shadow:0 3px 9px rgba(0,0,0,.35);font-size:10px}
+.deck-row .deck-validity.invalid{background:#a82a32;color:#fff}
+.deck-row .deck-validity.valid{background:#226648;color:#fff}
+.deck-favourite-toggle{z-index:4;top:8px;right:8px}
+.filter-menu[open] .filter-menu-panel{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;width:100%;margin-top:10px}
+@media(max-width:760px){.deck-row{height:236px}.deck-row-copy{padding-top:12px}.deck-row-copy>strong{font-size:14px}}
+
+.deck-list{grid-template-columns:repeat(var(--deck-cols,3),minmax(0,1fr))}
+
+
+/* Keep the Filter/Sort disclosure below the toolbar without resizing its row */
+.filter-sort-panel{margin-top:0}
+.filter-sort-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-items:end;gap:14px}
+.filter-sort-controls>label:not(.toolbar-toggle){display:block;color:#38483f;font-size:11px;font-weight:700}
+.filter-sort-controls select{display:block;width:100%;margin-top:7px}
+.filter-sort-controls .toolbar-toggle{align-self:end;min-height:40px}
+@media(max-width:760px){.filter-sort-controls{grid-template-columns:1fr 1fr}.filter-sort-controls .toolbar-toggle{grid-column:1/-1}}
+.deck-row{background-position:center center}
+.deck-row.is-favourite{background-position:center center}
+
+
+/* Price movement summary on the home page */
+.price-movers-card{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;padding:16px 20px;border:1px solid #dfd6c3;border-radius:16px;background:linear-gradient(135deg,#fffdf8,#f5f0e6);color:#273a31;box-shadow:0 4px 14px rgba(23,39,31,.07)}
+.price-movers-head{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px;padding-bottom:9px;border-bottom:1px solid #e7deca;font-size:10px;font-weight:800;letter-spacing:1.3px;color:#66746b}
+.price-movers-head small{font-size:10px;font-weight:500;letter-spacing:0;color:#838b82}
+.price-mover-row{display:flex;min-width:0;align-items:center;gap:9px;padding:8px 0}
+.price-mover-arrow{display:grid;place-items:center;width:27px;height:27px;flex:none;border-radius:50%;font-size:18px;font-weight:800}
+.price-mover-row.up .price-mover-arrow{background:#e1f1e3;color:#26784c}.price-mover-row.down .price-mover-arrow{background:#f9e5e2;color:#b33b35}
+.price-mover-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}
+.price-mover-copy small{font-size:9px;color:#79847b}.price-mover-copy strong{overflow:hidden;color:#293b32;font-size:12px;white-space:nowrap;text-overflow:ellipsis}
+.price-mover-row>b{flex:none;font-size:13px;color:#26784c}.price-mover-row.down>b{color:#b33b35}.price-mover-empty>b{color:#92988e}
+.deck-row .deck-validity{z-index:3;left:auto;right:-9px;bottom:13px;width:52px;height:42px;min-height:42px;justify-content:center;margin:0;padding:5px;border:0;border-radius:0;background:#ffeb68;box-shadow:0 3px 9px rgba(0,0,0,.35);transform:rotate(-3deg)}
+.deck-row .deck-validity::before{content:"";position:absolute;inset:0;border:1px solid rgba(255,255,255,.72);background:#ffeb68;clip-path:polygon(0 0,100% 0,100% 100%,7% 100%);z-index:-1}
+.deck-status-icon{display:grid;place-items:center;width:26px;height:26px;border:2px solid #fff;border-radius:50%;background:#278354;color:#fff;font:900 18px/1 "Segoe UI Symbol","Segoe UI",sans-serif}
+.deck-row .deck-validity.invalid .deck-status-icon{background:#ad3135}
+.deck-status-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.deck-row{background-position:50% 35%;background-size:cover}
+.deck-row.is-favourite{background-position:50% 35%;background-size:cover}
+@media(max-width:760px){.price-movers-card{grid-template-columns:1fr;padding:14px}.price-movers-head{align-items:flex-start;flex-direction:column;gap:4px}.price-mover-row{border-bottom:1px solid #e7deca}.price-mover-row:last-child{border-bottom:0}}
+
+/* Keep the hanging sticker shape; change only its content and palette */
+.deck-row .deck-validity{left:auto;right:-9px;bottom:13px;width:max-content;max-width:78%;height:30px;min-height:30px;justify-content:center;margin:0;padding:4px 16px 4px 12px;border:1px solid rgba(255,255,255,.82);border-right:0;border-radius:12px 0 0 12px;background:#ffeb68;box-shadow:0 3px 9px rgba(0,0,0,.35);transform:none;overflow:hidden}
+.deck-row .deck-validity::before{content:none}
+.deck-status-icon{width:24px;height:24px;border:2px solid #fff;background:#278354;color:#fff;font:900 17px/1 "Segoe UI Symbol","Segoe UI",sans-serif}
+.deck-row .deck-validity.invalid{background:#ffeb68;color:#374238;font-size:10px}
+.deck-row .deck-validity.invalid .deck-status-icon{display:none}
+
+.deck-row .deck-validity.invalid{background:#fbf0d8;color:#8b5f13}
+
+
+.deck-row .deck-validity.valid{background:#dff0dc;color:#315840}
+.deck-row .deck-validity.valid .deck-status-icon{border-width:1px;color:#edf8ef;font-weight:600}
+
+
+/* Deck titles sit low on the art so commander faces remain visible */
+.deck-row-copy{position:absolute;left:0;right:0;bottom:44px;width:100%;max-height:33%;min-height:0;align-items:center;justify-content:flex-end;gap:0;padding:10px 12px 8px;background:linear-gradient(180deg,rgba(14,22,20,.08),rgba(14,22,20,.82));border-radius:0 0 13px 13px;text-shadow:0 1px 5px rgba(0,0,0,.95)}
+.deck-row-copy>strong{width:100%;max-width:100%;max-height:2.6em;font-size:clamp(13px,1.35vw,18px);line-height:1.3;text-align:center;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}
+.deck-row-copy>span{display:none}
+@media(max-width:760px){.deck-row-copy{bottom:44px;padding:9px 10px 7px}.deck-row-copy>strong{font-size:clamp(13px,3.2vw,16px)}}
+
+/* Favourite identity colours stay on the frame, never over the commander art */
+.deck-row.is-favourite{border:2px solid transparent;background-color:transparent;background-image:linear-gradient(180deg,rgba(16,24,22,.72) 0%,rgba(16,24,22,.36) 32%,rgba(16,24,22,.06) 68%,rgba(16,24,22,.5) 100%),var(--deck-art,none),var(--deck-fav-fill,linear-gradient(0deg,#cfc9bc,#cfc9bc));background-origin:border-box,border-box,border-box;background-clip:padding-box,padding-box,border-box;background-position:50% 35%,50% 35%,center;background-size:cover,cover,cover;background-repeat:no-repeat}
+.deck-row-copy{bottom:0;max-height:33%;padding-right:64px;padding-bottom:12px}
+.deck-row:has(.deck-validity.invalid) .deck-row-copy{padding-right:98px}
+.deck-row .deck-validity.invalid{padding-left:8px;padding-right:12px;font-size:9px}
+
+.deck-row .deck-validity{top:12px;bottom:auto}
+.deck-row .deck-favourite-toggle{top:8px;right:auto;left:8px}
+
