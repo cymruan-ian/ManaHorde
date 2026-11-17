@@ -481,6 +481,8 @@ async function loadMtgNews(){
  }catch{}}
  container.innerHTML='<p class="muted">DailyMTG headlines could not be loaded right now. <a href="https://magic.wizards.com/en/news" target="_blank" rel="noopener">Open the latest Magic news ↗</a></p>';
 }if(channel)channel.onmessage=async()=>{try{events=await read();render();}catch(e){report(e);}};
+const splashEl=$('mobile-splash');
+if(splashEl){if(matchMedia('(pointer: coarse)').matches||innerWidth<=900){setTimeout(()=>{splashEl.classList.add('is-done');setTimeout(()=>splashEl.remove(),160);},500);}else splashEl.remove();}
 loadMtgNews();
 preloadCardCatalog();
 try{db=await openDB();events=mergeEvents(await read());render();network();if(clientId){if(autoConnectDrive)connectDriveOnLoad();else prepareGoogle().catch(()=>{});}if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>{console.error(e);toast('Offline setup failed. Keep the local server running and reload.');});}catch(e){$('add-button').disabled=true;$('first-card').disabled=true;report(Error('Local storage could not open. Enable browser site storage and reload before adding cards.'));}
