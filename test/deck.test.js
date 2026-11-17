@@ -24,6 +24,12 @@ test('cardFromScryfall extracts artImage and artUrlFromCard derives art_crop saf
   image_uris:{normal:'https://cards.scryfall.io/normal/front/a/b/123.jpg',art_crop:'https://cards.scryfall.io/art_crop/front/a/b/123.jpg'}
  });
  assert.equal(single.artImage,'https://cards.scryfall.io/art_crop/front/a/b/123.jpg');
+ assert.equal(single.backImage,'');
+ const dfc=cardFromScryfall({
+  name:'Front // Back',id:'id-2',set:'tst',set_name:'Test',collector_number:'2',rarity:'rare',lang:'en',finishes:['nonfoil'],
+  card_faces:[{name:'Front',oracle_text:'A',image_uris:{normal:'https://cards.scryfall.io/front.jpg'}},{name:'Back',oracle_text:'B',image_uris:{normal:'https://cards.scryfall.io/back.jpg'}}]
+ });
+ assert.equal(dfc.backImage,'https://cards.scryfall.io/back.jpg');
  assert.equal(artUrlFromCard(single),'https://cards.scryfall.io/art_crop/front/a/b/123.jpg');
  assert.equal(artUrlFromCard({image:'https://cards.scryfall.io/normal/front/1/2/xyz.jpg'}),'https://cards.scryfall.io/art_crop/front/1/2/xyz.jpg');
  assert.equal(artUrlFromCard({image:'https://evil.example.com/normal/x.jpg'}),'');
